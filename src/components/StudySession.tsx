@@ -400,6 +400,8 @@ const StudySession: React.FC<StudySessionProps> = ({ data, onBack }) => {
                                                     </p>
                                                     <VoiceRecorder
                                                         onTranscriptChange={(text) => handleTranscriptChange(section.id, text)}
+                                                        isEnabled={!!apiKey}
+                                                        onMissingKeyClick={() => setIsSettingsOpen(true)}
                                                     />
                                                 </div>
 

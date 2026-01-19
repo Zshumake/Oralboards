@@ -3,10 +3,11 @@ import { Mic, Square, RotateCcw } from 'lucide-react';
 
 interface VoiceRecorderProps {
     onTranscriptChange: (text: string) => void;
-    // Removed external control to allow multiple independent instances
+    isEnabled?: boolean;
+    onMissingKeyClick?: () => void;
 }
 
-const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptChange }) => {
+const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptChange, isEnabled = true, onMissingKeyClick }) => {
     const [transcript, setTranscript] = useState('');
     const [isSupported, setIsSupported] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
@@ -73,18 +74,39 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptChange }) => 
                 <h3 style={{ margin: 0, fontSize: '1.2rem', color: isRecording ? 'var(--color-danger)' : 'var(--color-text)' }}>
                     {isRecording ? 'Listening...' : 'Reflect & Record'}
                 </h3>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    {!isEnabled && (
+                        <span
+                            onClick={onMissingKeyClick}
+                            style={{
+                                color: 'var(--color-warning)',
+                                fontSize: '0.8rem',
+                                cursor: 'pointer',
+                                textDecoration: 'underline'
+                            }}
+                        >
+                            Missing Gemini API Key
+                        </span>
+                    )}
                     <button
                         onClick={toggleRecording}
+                        disabled={!isEnabled}
                         style={{
                             backgroundColor: isRecording ? 'var(--color-danger)' : 'var(--color-surface)',
                             borderColor: isRecording ? 'transparent' : 'var(--color-border)',
-                            color: isRecording ? '#fff' : 'var(--color-text)'
+                            color: isRecording ? '#fff' : 'var(--color-text)',
+                            opacity: isEnabled ? 1 : 0.5,
+                            cursor: isEnabled ? 'pointer' : 'not-allowed'
                         }}
                     >
                         {isRecording ? <><Square size={16} /> Stop</> : <><Mic size={16} /> Record Answer</>}
                     </button>
-                    <button onClick={clearTranscript} title="Clear">
+                    <button
+                        onClick={clearTranscript}
+                        title="Clear"
+                        disabled={!isEnabled}
+                        style={{ opacity: isEnabled ? 1 : 0.5, cursor: isEnabled ? 'pointer' : 'not-allowed' }}
+                    >
                         <RotateCcw size={16} />
                     </button>
                 </div>
@@ -92,11 +114,12 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptChange }) => 
 
             <textarea
                 value={transcript}
+                disabled={!isEnabled}
                 onChange={(e) => {
                     setTranscript(e.target.value);
                     onTranscriptChange(e.target.value);
                 }}
-                placeholder="Your answer will appear here... (or you can type)"
+                placeholder={isEnabled ? "Your answer will appear here... (or you can type)" : "Please add your Gemini API Key in settings to enable recording and feedback."}
                 style={{
                     width: '100%',
                     minHeight: '100px',
@@ -106,7 +129,8 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptChange }) => 
                     color: 'var(--color-text)',
                     padding: '1rem',
                     fontFamily: 'inherit',
-                    resize: 'vertical'
+                    resize: 'vertical',
+                    opacity: isEnabled ? 1 : 0.7
                 }}
             />
         </div>
