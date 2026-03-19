@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { cases, type Case } from './data/cases';
+import { cases } from './data/cases/index';
+import type { Case } from './types/case';
 import CaseCard from './components/CaseCard';
 import StudySession from './components/StudySession';
 import { Search, Shuffle, BookOpen } from 'lucide-react';
