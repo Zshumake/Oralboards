@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/settings_provider.dart';
+import '../providers/tts_provider.dart';
 import '../theme/app_theme.dart';
 
 class SettingsDialog extends ConsumerStatefulWidget {
@@ -110,6 +111,10 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
                 ),
               ),
             ),
+            const SizedBox(height: 24),
+            Container(height: 1, color: AppColors.divider),
+            const SizedBox(height: 16),
+            _TtsToggle(),
           ],
         ),
       ),
@@ -143,6 +148,54 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
             style: GoogleFonts.dmSans(
               fontWeight: FontWeight.w600,
               fontSize: 14,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TtsToggle extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isTtsEnabled = ref.watch(isTtsEnabledProvider).valueOrNull ?? true;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.volume_up_outlined, size: 18, color: AppColors.navy),
+            const SizedBox(width: 10),
+            Text(
+              'Examiner Voice (TTS)',
+              style: GoogleFonts.dmSans(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: AppColors.navy,
+              ),
+            ),
+          ],
+        ),
+        GestureDetector(
+          onTap: () => ref.read(isTtsEnabledProvider.notifier).toggle(),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(
+              color:
+                  isTtsEnabled ? AppColors.success : AppColors.surfaceAlt,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              isTtsEnabled ? 'ON' : 'OFF',
+              style: GoogleFonts.dmSans(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1,
+                color: isTtsEnabled ? Colors.white : AppColors.textMuted,
+              ),
             ),
           ),
         ),

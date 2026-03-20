@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../models/exam_models.dart';
 import '../models/feedback_model.dart';
 
 /// Calls the Gemini 1.5 Flash API to generate feedback on a candidate's answer.
@@ -82,5 +83,57 @@ Return a valid JSON object with the following structure (do NOT return markdown 
     return 'Error: Could not parse AI response.';
   } catch (e) {
     return 'Error generating feedback: $e';
+  }
+}
+
+/// Sends a multi-turn exam conversation to Gemini and returns structured output.
+/// Returns an [ExaminerTurnResult] on success, or an error [String] on failure.
+Future<dynamic> sendExamTurn({
+  required String apiKey,
+  required String systemInstruction,
+  required List<Map<String, dynamic>> contents,
+}) async {
+  if (apiKey.isEmpty) {
+    return 'Please set your API Key in Settings to use Exam Mode.';
+  }
+
+  try {
+    final uri = Uri.parse(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey',
+    );
+
+    final response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'systemInstruction': {
+          'parts': [
+            {'text': systemInstruction}
+          ]
+        },
+        'contents': contents,
+        'generationConfig': {
+          'responseMimeType': 'application/json',
+        },
+      }),
+    );
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+    if (data.containsKey('error')) {
+      final errorMsg = (data['error'] as Map<String, dynamic>)['message'];
+      throw Exception(errorMsg);
+    }
+
+    final textResponse =
+        data['candidates'][0]['content']['parts'][0]['text'] as String;
+
+    final parsed = ExaminerTurnResult.tryParse(textResponse);
+    if (parsed != null) {
+      return parsed;
+    }
+    return 'Error: Could not parse examiner response.';
+  } catch (e) {
+    return 'Error in exam conversation: $e';
   }
 }

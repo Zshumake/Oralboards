@@ -1,24 +1,27 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Flutter
+.dart_tool/
+.packages
+build/
+*.iml
 
-node_modules
-dist
-dist-ssr
-*.local
+# Platform build artifacts
+android/.gradle/
+android/local.properties
+ios/Pods/
+ios/.symlinks/
+linux/flutter/ephemeral/
+windows/flutter/ephemeral/
 
-# Editor directories and files
+# IDE
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
 *.sw?
+.DS_Store
+
+# Claude
+.claude/
+
+# Misc
+*.log
+*.local

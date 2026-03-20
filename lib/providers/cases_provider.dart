@@ -4,6 +4,8 @@ import '../models/case_model.dart';
 
 final searchTermProvider = StateProvider<String>((ref) => '');
 
+final isExamModeProvider = StateProvider<bool>((ref) => false);
+
 final filteredCasesProvider = Provider<List<CaseModel>>((ref) {
   final searchTerm = ref.watch(searchTermProvider).toLowerCase();
   if (searchTerm.isEmpty) return allCases;

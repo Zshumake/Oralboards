@@ -1,0 +1,247 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../models/case_model.dart';
+import '../models/exam_models.dart';
+import '../providers/exam_session_provider.dart';
+import '../providers/settings_provider.dart';
+import '../providers/timer_provider.dart';
+import '../theme/app_theme.dart';
+import '../widgets/exam/exam_chat_bubble.dart';
+import '../widgets/exam/exam_header.dart';
+import '../widgets/exam/exam_input_bar.dart';
+import '../widgets/exam/exam_score_card.dart';
+import '../widgets/exam/exam_thinking_indicator.dart';
+import '../widgets/exam/examiner_tile.dart';
+import '../widgets/exam/student_tile.dart';
+import '../widgets/settings_dialog.dart';
+
+class ExamScreen extends ConsumerStatefulWidget {
+  final CaseModel caseData;
+
+  const ExamScreen({super.key, required this.caseData});
+
+  @override
+  ConsumerState<ExamScreen> createState() => _ExamScreenState();
+}
+
+class _ExamScreenState extends ConsumerState<ExamScreen>
+    with SingleTickerProviderStateMixin {
+  final _scrollController = ScrollController();
+  late AnimationController _fadeController;
+
+  @override
+  void initState() {
+    super.initState();
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(examSessionProvider.notifier).loadCase(widget.caseData);
+      ref.read(timerProvider.notifier).reset();
+      _fadeController.forward();
+      _startExam();
+    });
+  }
+
+  Future<void> _startExam() async {
+    // Check for API key first
+    final apiKey = ref.read(apiKeyProvider).valueOrNull ?? '';
+    if (apiKey.isEmpty) {
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          title: Text(
+            'API Key Required',
+            style: GoogleFonts.playfairDisplay(
+              fontWeight: FontWeight.w700,
+              color: AppColors.navy,
+            ),
+          ),
+          content: Text(
+            'Exam mode requires a Gemini API key for the AI examiner. Please add your key in Settings.',
+            style: GoogleFonts.sourceSerif4(color: AppColors.text),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.pop(context);
+              },
+              child: Text('Go Back', style: GoogleFonts.dmSans()),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                showSettingsDialog(context);
+              },
+              child: Text('Open Settings', style: GoogleFonts.dmSans()),
+            ),
+          ],
+        ),
+      );
+      // Wait for settings, then try again
+      await Future.delayed(const Duration(milliseconds: 500));
+      final newKey = ref.read(apiKeyProvider).valueOrNull ?? '';
+      if (newKey.isEmpty) return;
+    }
+
+    ref.read(timerProvider.notifier).toggle(); // start timer
+    ref.read(examSessionProvider.notifier).startExam();
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    });
+  }
+
+  void _endExam() {
+    ref.read(timerProvider.notifier).toggle(); // stop timer
+    ref.read(examSessionProvider.notifier).endExam();
+  }
+
+  void _tryAgain() {
+    ref.read(examSessionProvider.notifier).loadCase(widget.caseData);
+    ref.read(timerProvider.notifier).reset();
+    ref.read(timerProvider.notifier).toggle();
+    ref.read(examSessionProvider.notifier).startExam();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _fadeController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final examState = ref.watch(examSessionProvider);
+    final timer = ref.watch(timerProvider);
+
+    // Auto-scroll when messages change
+    _scrollToBottom();
+
+    // Show score card when exam is complete
+    if (examState.phase == ExamPhase.examComplete) {
+      return ExamScoreCard(
+        examState: examState,
+        elapsedTime: timer.formatted,
+        onReturnHome: () {
+          Navigator.pop(context);
+        },
+        onTryAgain: _tryAgain,
+      );
+    }
+
+    // Collect all messages across all sections for display
+    final allMessages = <ConversationMessage>[];
+    for (var i = 0; i <= examState.currentSectionIndex; i++) {
+      if (i < examState.examSections.length) {
+        final sectionId = examState.examSections[i].id;
+        final msgs = examState.messagesBySection[sectionId] ?? [];
+        allMessages.addAll(msgs);
+      }
+    }
+
+    return Scaffold(
+      body: FadeTransition(
+        opacity: CurvedAnimation(
+          parent: _fadeController,
+          curve: Curves.easeOut,
+        ),
+        child: Column(
+          children: [
+            // Header
+            ExamHeader(
+              onBack: () {
+                ref.read(timerProvider.notifier).reset();
+                Navigator.pop(context);
+              },
+              onEndExam: _endExam,
+            ),
+
+            // Video tiles
+            SizedBox(
+              height: 180,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: Row(
+                  children: [
+                    const Expanded(child: ExaminerTile()),
+                    const SizedBox(width: 12),
+                    const Expanded(child: StudentTile()),
+                  ],
+                ),
+              ),
+            ),
+
+            // Messages area
+            Expanded(
+              child: Container(
+                color: AppColors.bg,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 780),
+                    child: allMessages.isEmpty && !examState.isWaitingForAi
+                        ? _buildWaitingState()
+                        : ListView.builder(
+                            controller: _scrollController,
+                            padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                            itemCount: allMessages.length +
+                                (examState.isWaitingForAi ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index == allMessages.length &&
+                                  examState.isWaitingForAi) {
+                                return const ExamThinkingIndicator();
+                              }
+                              return ExamChatBubble(
+                                  message: allMessages[index]);
+                            },
+                          ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Input bar
+            const ExamInputBar(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWaitingState() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.medical_services_outlined,
+            size: 48,
+            color: AppColors.navy.withValues(alpha: 0.3),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Preparing your examination...',
+            style: GoogleFonts.sourceSerif4(
+              fontSize: 16,
+              fontStyle: FontStyle.italic,
+              color: AppColors.textMuted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

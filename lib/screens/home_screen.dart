@@ -7,6 +7,7 @@ import '../models/case_model.dart';
 import '../providers/cases_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/case_card.dart';
+import 'exam_screen.dart';
 import 'study_session_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -39,9 +40,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _openCase(CaseModel caseData) {
+    final isExamMode = ref.read(isExamModeProvider);
     Navigator.of(context).push(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => StudySessionScreen(caseData: caseData),
+        pageBuilder: (_, __, ___) => isExamMode
+            ? ExamScreen(caseData: caseData)
+            : StudySessionScreen(caseData: caseData),
         transitionsBuilder: (_, animation, __, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -117,7 +121,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                               letterSpacing: 2,
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 24),
+                          // Mode toggle
+                          _ModeToggle(),
+                          const SizedBox(height: 24),
                           // Thin bottom rule
                           Container(
                             height: 1,
@@ -284,6 +291,98 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Study / Exam mode segmented control
+class _ModeToggle extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isExamMode = ref.watch(isExamModeProvider);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      padding: const EdgeInsets.all(3),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _ModeOption(
+            label: 'Study',
+            icon: Icons.menu_book_outlined,
+            isSelected: !isExamMode,
+            onTap: () =>
+                ref.read(isExamModeProvider.notifier).state = false,
+          ),
+          _ModeOption(
+            label: 'Exam Simulation',
+            icon: Icons.videocam_outlined,
+            isSelected: isExamMode,
+            onTap: () =>
+                ref.read(isExamModeProvider.notifier).state = true,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ModeOption extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ModeOption({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.surface : Colors.transparent,
+          borderRadius: BorderRadius.circular(4),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? AppColors.navy : AppColors.textMuted,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: GoogleFonts.dmSans(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected ? AppColors.navy : AppColors.textMuted,
+              ),
+            ),
+          ],
         ),
       ),
     );
