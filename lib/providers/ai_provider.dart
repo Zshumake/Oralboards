@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../models/feedback_model.dart';
+import '../services/database_service.dart';
 import '../services/gemini_service.dart';
 import 'settings_provider.dart';
 
@@ -16,8 +18,9 @@ Future<void> getFeedback(
   WidgetRef ref,
   String sectionId,
   String transcript,
-  String modelAnswer,
-) async {
+  String modelAnswer, {
+  String? caseId,
+}) async {
   final apiKey = ref.read(apiKeyProvider).valueOrNull ?? '';
   if (apiKey.isEmpty) {
     ref.read(feedbacksProvider.notifier).update((state) {
@@ -51,6 +54,17 @@ Future<void> getFeedback(
     next[sectionId] = result;
     return next;
   });
+
+  // Persist study feedback to database for analytics
+  if (result is FeedbackAnalysis && caseId != null) {
+    DatabaseService.insertStudyFeedback(
+      caseId: caseId,
+      sectionId: sectionId,
+      score: result.content.score,
+      missedConcepts: result.content.missedConcepts,
+      redFlags: result.content.redFlags,
+    );
+  }
 
   // Remove from generating
   ref.read(generatingFeedbackForProvider.notifier).update((state) {

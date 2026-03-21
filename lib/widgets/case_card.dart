@@ -1,23 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/case_model.dart';
+import '../providers/history_provider.dart';
 import '../theme/app_theme.dart';
 
-class CaseCard extends StatefulWidget {
+class CaseCard extends ConsumerStatefulWidget {
   final CaseModel data;
   final VoidCallback onTap;
 
   const CaseCard({super.key, required this.data, required this.onTap});
 
   @override
-  State<CaseCard> createState() => _CaseCardState();
+  ConsumerState<CaseCard> createState() => _CaseCardState();
 }
 
-class _CaseCardState extends State<CaseCard> {
+class _CaseCardState extends ConsumerState<CaseCard> {
   bool _isPressed = false;
 
   @override
   Widget build(BuildContext context) {
+    final latestResult = ref.watch(latestCaseResultProvider(widget.data.id));
+
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) {
@@ -46,7 +50,7 @@ class _CaseCardState extends State<CaseCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top row: icon + arrow
+              // Top row: icon + score badge + arrow
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -62,10 +66,46 @@ class _CaseCardState extends State<CaseCard> {
                       color: AppColors.navy,
                     ),
                   ),
-                  Icon(
-                    Icons.arrow_forward,
-                    size: 16,
-                    color: AppColors.burgundy.withValues(alpha: 0.6),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Last score badge
+                      latestResult.when(
+                        data: (result) {
+                          if (result == null) return const SizedBox.shrink();
+                          final pct = (result.overallScore * 100).round();
+                          final color = pct >= 70
+                              ? AppColors.success
+                              : (pct >= 50
+                                  ? AppColors.warning
+                                  : AppColors.danger);
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '$pct%',
+                              style: GoogleFonts.dmSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: color,
+                              ),
+                            ),
+                          );
+                        },
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, __) => const SizedBox.shrink(),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.arrow_forward,
+                        size: 16,
+                        color: AppColors.burgundy.withValues(alpha: 0.6),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -101,8 +141,13 @@ class _CaseCardState extends State<CaseCard> {
               // Badges
               Row(
                 children: [
-                  _Badge('High Yield', AppColors.navy),
-                  const SizedBox(width: 8),
+                  if (widget.data.isCustom) ...[
+                    _Badge('Custom', AppColors.burgundy),
+                    const SizedBox(width: 8),
+                  ] else ...[
+                    _Badge('High Yield', AppColors.navy),
+                    const SizedBox(width: 8),
+                  ],
                   _Badge('Practice', AppColors.burgundy),
                 ],
               ),

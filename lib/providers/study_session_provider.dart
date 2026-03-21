@@ -1,14 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/case_model.dart';
 import '../models/study_section.dart';
+import '../services/database_service.dart';
 
 class StudySessionState {
+  final String caseId;
   final List<StudySection> processedSections;
   final Set<String> expandedSections;
   final Set<String> revealedAnswers;
   final Map<String, String> transcripts;
 
   const StudySessionState({
+    this.caseId = '',
     this.processedSections = const [],
     this.expandedSections = const {},
     this.revealedAnswers = const {},
@@ -16,12 +19,14 @@ class StudySessionState {
   });
 
   StudySessionState copyWith({
+    String? caseId,
     List<StudySection>? processedSections,
     Set<String>? expandedSections,
     Set<String>? revealedAnswers,
     Map<String, String>? transcripts,
   }) {
     return StudySessionState(
+      caseId: caseId ?? this.caseId,
       processedSections: processedSections ?? this.processedSections,
       expandedSections: expandedSections ?? this.expandedSections,
       revealedAnswers: revealedAnswers ?? this.revealedAnswers,
@@ -36,11 +41,13 @@ class StudySessionNotifier extends StateNotifier<StudySessionState> {
   void loadCase(CaseModel caseData) {
     final sections = _processSections(caseData);
     state = StudySessionState(
+      caseId: caseData.id,
       processedSections: sections,
       expandedSections: sections.isNotEmpty ? {sections.first.id} : {},
       revealedAnswers: {},
       transcripts: {},
     );
+    DatabaseService.logPractice(caseData.id, 'study');
   }
 
   List<StudySection> _processSections(CaseModel data) {

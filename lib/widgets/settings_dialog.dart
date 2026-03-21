@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../providers/exam_settings_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/tts_provider.dart';
 import '../theme/app_theme.dart';
@@ -115,6 +116,14 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
             Container(height: 1, color: AppColors.divider),
             const SizedBox(height: 16),
             _TtsToggle(),
+            const SizedBox(height: 16),
+            Container(height: 1, color: AppColors.divider),
+            const SizedBox(height: 16),
+            _TimedExamToggle(),
+            const SizedBox(height: 16),
+            Container(height: 1, color: AppColors.divider),
+            const SizedBox(height: 16),
+            _HighContrastToggle(),
           ],
         ),
       ),
@@ -200,6 +209,164 @@ class _TtsToggle extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _TimedExamToggle extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings =
+        ref.watch(examSettingsProvider).valueOrNull ?? const ExamSettings();
+
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.timer_outlined, size: 18, color: AppColors.navy),
+                const SizedBox(width: 10),
+                Text(
+                  'Timed Exam',
+                  style: GoogleFonts.dmSans(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: AppColors.navy,
+                  ),
+                ),
+              ],
+            ),
+            GestureDetector(
+              onTap: () => ref
+                  .read(examSettingsProvider.notifier)
+                  .setTimedMode(!settings.isTimedMode),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: settings.isTimedMode
+                      ? AppColors.success
+                      : AppColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  settings.isTimedMode ? 'ON' : 'OFF',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1,
+                    color: settings.isTimedMode
+                        ? Colors.white
+                        : AppColors.textMuted,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (settings.isTimedMode) ...[
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const SizedBox(width: 28),
+              Text(
+                'Duration:',
+                style: GoogleFonts.dmSans(
+                  fontSize: 13,
+                  color: AppColors.textMuted,
+                ),
+              ),
+              const SizedBox(width: 12),
+              ...([15, 20, 25, 30]).map((min) {
+                final isSelected = settings.examDurationMinutes == min;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: GestureDetector(
+                    onTap: () => ref
+                        .read(examSettingsProvider.notifier)
+                        .setDuration(min),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.navy
+                            : AppColors.surfaceAlt,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '${min}m',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color:
+                              isSelected ? Colors.white : AppColors.textMuted,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _HighContrastToggle extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isHC = ref.watch(highContrastProvider).valueOrNull ?? false;
+
+    return Semantics(
+      toggled: isHC,
+      label: 'High contrast mode',
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.contrast, size: 18, color: AppColors.navy),
+              const SizedBox(width: 10),
+              Text(
+                'High Contrast',
+                style: GoogleFonts.dmSans(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: AppColors.navy,
+                ),
+              ),
+            ],
+          ),
+          GestureDetector(
+            onTap: () => ref.read(highContrastProvider.notifier).toggle(),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(
+                color: isHC ? AppColors.success : AppColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                isHC ? 'ON' : 'OFF',
+                style: GoogleFonts.dmSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1,
+                  color: isHC ? Colors.white : AppColors.textMuted,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

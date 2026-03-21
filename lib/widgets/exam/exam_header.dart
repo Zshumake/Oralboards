@@ -107,24 +107,49 @@ class ExamHeader extends ConsumerWidget {
 
             const SizedBox(width: 12),
 
-            // Timer
-            Container(
+            // Timer with countdown awareness
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 500),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.surfaceAlt,
+                color: timer.isCritical
+                    ? AppColors.danger.withValues(alpha: 0.1)
+                    : (timer.isWarning
+                        ? AppColors.warning.withValues(alpha: 0.1)
+                        : AppColors.surfaceAlt),
                 borderRadius: BorderRadius.circular(4),
+                border: timer.isCritical
+                    ? Border.all(color: AppColors.danger.withValues(alpha: 0.4))
+                    : (timer.isWarning
+                        ? Border.all(
+                            color: AppColors.warning.withValues(alpha: 0.4))
+                        : null),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.access_time, size: 14, color: AppColors.navy.withValues(alpha: 0.5)),
+                  Icon(
+                    timer.mode == TimerMode.countdown
+                        ? Icons.hourglass_bottom
+                        : Icons.access_time,
+                    size: 14,
+                    color: timer.isCritical
+                        ? AppColors.danger
+                        : (timer.isWarning
+                            ? AppColors.warning
+                            : AppColors.navy.withValues(alpha: 0.5)),
+                  ),
                   const SizedBox(width: 6),
                   Text(
-                    timer.formatted,
+                    timer.display,
                     style: GoogleFonts.jetBrainsMono(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.navy,
+                      color: timer.isCritical
+                          ? AppColors.danger
+                          : (timer.isWarning
+                              ? AppColors.warning
+                              : AppColors.navy),
                     ),
                   ),
                 ],

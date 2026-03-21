@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/exam_models.dart';
 import '../../theme/app_theme.dart';
+import 'timing_feedback_card.dart';
 
 class ExamScoreCard extends StatelessWidget {
   final ExamSessionState examState;
@@ -98,6 +99,9 @@ class ExamScoreCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
 
+                // Timing feedback
+                TimingFeedbackCard(examState: examState),
+
                 // Per-section breakdown
                 Text(
                   'Section Breakdown',
@@ -109,7 +113,10 @@ class ExamScoreCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                ...scores.map((score) => _SectionScoreCard(score: score)),
+                ...scores.map((score) => _SectionScoreCard(
+                      score: score,
+                      timing: examState.sectionTimings[score.sectionId],
+                    )),
 
                 const SizedBox(height: 32),
                 Container(height: 1, color: AppColors.divider),
@@ -212,8 +219,9 @@ class _SummaryCard extends StatelessWidget {
 
 class _SectionScoreCard extends StatelessWidget {
   final SectionScore score;
+  final SectionTiming? timing;
 
-  const _SectionScoreCard({required this.score});
+  const _SectionScoreCard({required this.score, this.timing});
 
   @override
   Widget build(BuildContext context) {
@@ -251,12 +259,33 @@ class _SectionScoreCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Text(
-                '${score.turnsTaken} turns',
-                style: GoogleFonts.dmSans(
-                  fontSize: 12,
-                  color: AppColors.textMuted,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (timing != null) ...[
+                    Text(
+                      _formatTime(timing!.elapsedSeconds),
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 12,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 1,
+                      height: 12,
+                      color: AppColors.divider,
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Text(
+                    '${score.turnsTaken} turns',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 12,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -380,5 +409,11 @@ class _SectionScoreCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _formatTime(int seconds) {
+    final m = seconds ~/ 60;
+    final s = seconds % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
   }
 }

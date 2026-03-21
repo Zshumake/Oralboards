@@ -3,10 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/case_model.dart';
 import '../models/exam_models.dart';
+import '../models/multi_case_session.dart';
 import '../providers/exam_session_provider.dart';
+import '../providers/exam_settings_provider.dart';
+import '../providers/multi_case_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/timer_provider.dart';
 import '../theme/app_theme.dart';
+import 'case_break_screen.dart';
+import 'session_summary_screen.dart';
 import '../widgets/exam/exam_chat_bubble.dart';
 import '../widgets/exam/exam_header.dart';
 import '../widgets/exam/exam_input_bar.dart';
@@ -29,6 +34,7 @@ class _ExamScreenState extends ConsumerState<ExamScreen>
     with SingleTickerProviderStateMixin {
   final _scrollController = ScrollController();
   late AnimationController _fadeController;
+  bool _hasShownTimeUp = false;
 
   @override
   void initState() {
@@ -88,7 +94,19 @@ class _ExamScreenState extends ConsumerState<ExamScreen>
       if (newKey.isEmpty) return;
     }
 
-    ref.read(timerProvider.notifier).toggle(); // start timer
+    // Start timer — countdown or count-up based on settings
+    final examSettings =
+        ref.read(examSettingsProvider).valueOrNull ?? const ExamSettings();
+    final sectionCount =
+        ref.read(examSessionProvider).examSections.length;
+    if (examSettings.isTimedMode) {
+      ref.read(timerProvider.notifier).startCountdown(
+            examSettings.examDurationMinutes * 60,
+            sectionCount: sectionCount,
+          );
+    } else {
+      ref.read(timerProvider.notifier).toggle();
+    }
     ref.read(examSessionProvider.notifier).startExam();
   }
 
@@ -128,14 +146,54 @@ class _ExamScreenState extends ConsumerState<ExamScreen>
     final examState = ref.watch(examSessionProvider);
     final timer = ref.watch(timerProvider);
 
+    // Check for countdown expiry
+    if (timer.isExpired &&
+        !_hasShownTimeUp &&
+        examState.phase == ExamPhase.inProgress) {
+      _hasShownTimeUp = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showTimeUpDialog();
+      });
+    }
+
     // Auto-scroll when messages change
     _scrollToBottom();
 
     // Show score card when exam is complete
     if (examState.phase == ExamPhase.examComplete) {
+      final multiCase = ref.read(multiCaseProvider);
+      if (multiCase != null && multiCase.phase == MultiCasePhase.inCase) {
+        // Multi-case: notify provider and navigate
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(multiCaseProvider.notifier).onCaseComplete(examState);
+          final updated = ref.read(multiCaseProvider);
+          if (updated == null) return;
+
+          if (updated.phase == MultiCasePhase.sessionComplete) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                  builder: (_) => const SessionSummaryScreen()),
+            );
+          } else {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) =>
+                    CaseBreakScreen(completedCaseState: examState),
+              ),
+            );
+          }
+        });
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(color: AppColors.navy),
+          ),
+        );
+      }
+
+      // Single case: show score card as before
       return ExamScoreCard(
         examState: examState,
-        elapsedTime: timer.formatted,
+        elapsedTime: timer.display,
         onReturnHome: () {
           Navigator.pop(context);
         },
@@ -217,6 +275,38 @@ class _ExamScreenState extends ConsumerState<ExamScreen>
             const ExamInputBar(),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showTimeUpDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          "Time's Up",
+          style: GoogleFonts.playfairDisplay(
+            fontWeight: FontWeight.w700,
+            color: AppColors.danger,
+          ),
+        ),
+        content: Text(
+          'Your exam time has expired. Your exam will be scored based on what you completed.',
+          style: GoogleFonts.sourceSerif4(color: AppColors.text),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _endExam();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.burgundy,
+            ),
+            child: Text('View Results', style: GoogleFonts.dmSans()),
+          ),
+        ],
       ),
     );
   }

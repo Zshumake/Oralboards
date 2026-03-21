@@ -287,6 +287,7 @@ class SectionAccordion extends ConsumerWidget {
                                         section.id,
                                         transcript,
                                         section.answer,
+                                        caseId: sessionState.caseId,
                                       ),
                               icon: Icon(
                                 Icons.auto_awesome,

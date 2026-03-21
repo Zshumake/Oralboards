@@ -40,3 +40,24 @@ class AiEnabledNotifier extends AsyncNotifier<bool> {
     state = AsyncData(newValue);
   }
 }
+
+// --- Accessibility ---
+
+final highContrastProvider =
+    AsyncNotifierProvider<HighContrastNotifier, bool>(HighContrastNotifier.new);
+
+class HighContrastNotifier extends AsyncNotifier<bool> {
+  @override
+  Future<bool> build() async {
+    final prefs = ref.read(sharedPrefsProvider);
+    return await prefs.getBool('high_contrast_mode') ?? false;
+  }
+
+  Future<void> toggle() async {
+    final current = state.valueOrNull ?? false;
+    final newValue = !current;
+    final prefs = ref.read(sharedPrefsProvider);
+    await prefs.setBool('high_contrast_mode', newValue);
+    state = AsyncData(newValue);
+  }
+}

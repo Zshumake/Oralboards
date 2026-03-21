@@ -2,12 +2,19 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../data/cases/all_cases.dart';
 import '../models/case_model.dart';
 import '../providers/cases_provider.dart';
+import '../providers/recommendations_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/due_reviews_card.dart';
+import '../widgets/recommendation_card.dart';
+import '../widgets/streak_card.dart';
 import '../widgets/case_card.dart';
+import 'case_author_screen.dart';
+import 'dashboard_screen.dart';
 import 'exam_screen.dart';
+import 'history_screen.dart';
+import 'multi_case_setup_screen.dart';
 import 'study_session_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -56,7 +63,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   void _randomCase() {
     final filtered = ref.read(filteredCasesProvider);
-    final pool = filtered.isNotEmpty ? filtered : allCases;
+    final all = ref.read(allAvailableCasesProvider);
+    final pool = filtered.isNotEmpty ? filtered : all;
     final random = pool[Random().nextInt(pool.length)];
     _openCase(random);
   }
@@ -112,18 +120,104 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             ),
                           ),
                           const SizedBox(height: 6),
-                          Text(
-                            '${allCases.length} High-Yield Practice Cases',
-                            style: GoogleFonts.dmSans(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textMuted,
-                              letterSpacing: 2,
-                            ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '${ref.watch(allAvailableCasesProvider).length} High-Yield Practice Cases',
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.textMuted,
+                                  letterSpacing: 2,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    PageRouteBuilder(
+                                      pageBuilder: (_, __, ___) =>
+                                          const DashboardScreen(),
+                                      transitionsBuilder:
+                                          (_, animation, __, child) {
+                                        return FadeTransition(
+                                            opacity: animation, child: child);
+                                      },
+                                      transitionDuration:
+                                          const Duration(milliseconds: 300),
+                                    ),
+                                  );
+                                },
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.insights,
+                                      size: 14,
+                                      color: AppColors.navy,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'DASHBOARD',
+                                      style: GoogleFonts.dmSans(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.navy,
+                                        letterSpacing: 1.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    PageRouteBuilder(
+                                      pageBuilder: (_, __, ___) =>
+                                          const HistoryScreen(),
+                                      transitionsBuilder:
+                                          (_, animation, __, child) {
+                                        return FadeTransition(
+                                            opacity: animation, child: child);
+                                      },
+                                      transitionDuration:
+                                          const Duration(milliseconds: 300),
+                                    ),
+                                  );
+                                },
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.bar_chart_rounded,
+                                      size: 14,
+                                      color: AppColors.burgundy,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'HISTORY',
+                                      style: GoogleFonts.dmSans(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.burgundy,
+                                        letterSpacing: 1.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 24),
                           // Mode toggle
                           _ModeToggle(),
+                          const SizedBox(height: 16),
+                          // Due reviews
+                          const DueReviewsCard(),
+                          // Streak & Goals
+                          const StreakCard(),
                           const SizedBox(height: 24),
                           // Thin bottom rule
                           Container(
@@ -175,6 +269,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                 ),
                               ),
                               const SizedBox(width: 16),
+                              OutlinedButton.icon(
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const CaseAuthorScreen(),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.add, size: 16),
+                                label: Text(
+                                  'Create',
+                                  style: GoogleFonts.dmSans(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.navy,
+                                  side: const BorderSide(color: AppColors.navy),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
                               ElevatedButton.icon(
                                 onPressed: _randomCase,
                                 icon: const Icon(Icons.shuffle, size: 16),
@@ -200,10 +324,52 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                               ),
                             ],
                           ),
+                          // Full Exam Session button (exam mode only)
+                          if (ref.watch(isExamModeProvider)) ...[
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    PageRouteBuilder(
+                                      pageBuilder: (_, __, ___) =>
+                                          const MultiCaseSetupScreen(),
+                                      transitionsBuilder:
+                                          (_, animation, __, child) {
+                                        return FadeTransition(
+                                            opacity: animation, child: child);
+                                      },
+                                      transitionDuration:
+                                          const Duration(milliseconds: 300),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.playlist_play, size: 18),
+                                label: Text(
+                                  'Full Exam Session (Multiple Cases)',
+                                  style: GoogleFonts.dmSans(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.navy,
+                                  side: const BorderSide(color: AppColors.navy),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 32),
                         ],
                       ),
                     ),
+
+                    // Recommendations
+                    _RecommendationsSection(onOpenCase: _openCase),
 
                     // Case grid or empty state
                     if (filteredCases.isEmpty)
@@ -384,6 +550,62 @@ class _ModeOption extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Recommended cases based on weak areas
+class _RecommendationsSection extends ConsumerWidget {
+  final void Function(CaseModel) onOpenCase;
+
+  const _RecommendationsSection({required this.onOpenCase});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final recs = ref.watch(recommendationsProvider);
+    if (recs.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+
+    return SliverToBoxAdapter(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Recommended for You',
+            style: GoogleFonts.playfairDisplay(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColors.navy,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Based on your weak areas',
+            style: GoogleFonts.sourceSerif4(
+              fontSize: 13,
+              fontStyle: FontStyle.italic,
+              color: AppColors.textMuted,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 170,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: recs.length,
+              itemBuilder: (context, index) {
+                final rec = recs[index];
+                return RecommendationCard(
+                  recommendation: rec,
+                  onTap: () => onOpenCase(rec.caseModel),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 28),
+          Container(height: 1, color: AppColors.divider),
+          const SizedBox(height: 28),
+        ],
       ),
     );
   }

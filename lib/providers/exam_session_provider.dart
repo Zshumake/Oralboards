@@ -1,9 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/case_model.dart';
 import '../models/exam_models.dart';
+import '../models/exam_result.dart';
+import '../services/database_service.dart';
 import '../services/exam_prompt_builder.dart';
 import '../services/gemini_service.dart' as gemini;
+import 'history_provider.dart';
+import 'review_provider.dart';
 import 'settings_provider.dart';
+import 'timer_provider.dart';
 import 'tts_provider.dart';
 
 class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
@@ -124,6 +129,9 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
     final section = state.currentSection;
     if (section == null) return;
 
+    // Close timing for current section
+    _closeSectionTiming(section.id);
+
     // Store score for current section
     final messages = state.messagesBySection[section.id] ?? [];
     final allConceptsHit = <String>{};
@@ -160,6 +168,7 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
         sectionScores: scores,
         phase: ExamPhase.examComplete,
       );
+      _saveResult();
       return;
     }
 
@@ -192,6 +201,8 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
     final section = state.currentSection;
     if (section == null) return;
 
+    _closeSectionTiming(section.id);
+
     final scores = Map<String, SectionScore>.from(state.sectionScores);
     scores[section.id] = SectionScore(
       sectionId: section.id,
@@ -219,6 +230,10 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
 
   /// End the exam early.
   void endExam() {
+    // Close timing for current section
+    final current = state.currentSection;
+    if (current != null) _closeSectionTiming(current.id);
+
     // Score any remaining sections as skipped
     final scores = Map<String, SectionScore>.from(state.sectionScores);
     for (var i = state.currentSectionIndex;
@@ -238,6 +253,7 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
       sectionScores: scores,
       phase: ExamPhase.examComplete,
     );
+    _saveResult();
   }
 
   void updateInput(String text) {
@@ -252,13 +268,119 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
     state = state.copyWith(isTtsSpeaking: speaking);
   }
 
+  void _closeSectionTiming(String sectionId) {
+    final timing = state.sectionTimings[sectionId];
+    if (timing == null || timing.endTime != null) return;
+    final timings = Map<String, SectionTiming>.from(state.sectionTimings);
+    timings[sectionId] = timing.close();
+    state = state.copyWith(sectionTimings: timings);
+  }
+
+  // --- Result persistence ---
+
+  void _saveResult() {
+    final scores = state.sectionScores.values.toList();
+    final totalHit =
+        scores.fold<int>(0, (sum, s) => sum + s.conceptsHit.length);
+    final totalMissed =
+        scores.fold<int>(0, (sum, s) => sum + s.conceptsMissed.length);
+    final total = totalHit + totalMissed;
+    final overallScore = total > 0 ? totalHit / total : 0.0;
+    final totalRedFlags =
+        scores.fold<int>(0, (sum, s) => sum + s.redFlags.length);
+    final timer = ref.read(timerProvider);
+
+    final sectionRecords = scores
+        .map((s) {
+          final timing = state.sectionTimings[s.sectionId];
+          return SectionScoreRecord(
+            sectionId: s.sectionId,
+            sectionTitle: s.sectionTitle,
+            conceptsHit: s.conceptsHit.length,
+            conceptsMissed: s.conceptsMissed.length,
+            redFlags: s.redFlags.length,
+            turnsTaken: s.turnsTaken,
+            timeSpentSeconds: timing?.elapsedSeconds ?? 0,
+            conceptsHitList: s.conceptsHit,
+            conceptsMissedList: s.conceptsMissed,
+            redFlagsList: s.redFlags,
+            domain: _inferDomain(s.sectionTitle),
+          );
+        })
+        .toList();
+
+    final result = ExamResult(
+      caseId: state.caseId,
+      caseTitle: state.caseTitle,
+      date: DateTime.now(),
+      overallScore: overallScore,
+      timeElapsedSeconds: timer.seconds,
+      sectionScores: sectionRecords,
+      redFlagCount: totalRedFlags,
+      totalConceptsHit: totalHit,
+      totalConceptsMissed: totalMissed,
+    );
+
+    // Save result and transcripts
+    _persistResultAndTranscripts(result);
+
+    // Update spaced repetition schedule
+    ref
+        .read(reviewProvider.notifier)
+        .updateAfterExam(state.caseId, overallScore);
+
+    // Log practice activity
+    DatabaseService.logPractice(state.caseId, 'exam');
+  }
+
+  Future<void> _persistResultAndTranscripts(ExamResult result) async {
+    final resultId = await DatabaseService.insertExamResult(result);
+    ref.read(examHistoryProvider.notifier).refresh();
+
+    // Serialize conversation transcripts
+    final transcripts = <String, List<Map<String, String>>>{};
+    for (final entry in state.messagesBySection.entries) {
+      transcripts[entry.key] = entry.value
+          .map((m) => {
+                'role': m.role.name,
+                'text': m.text,
+                'timestamp': m.timestamp.toIso8601String(),
+              })
+          .toList();
+    }
+    await DatabaseService.insertTranscripts(resultId, transcripts);
+  }
+
+  static String? _inferDomain(String sectionTitle) {
+    final lower = sectionTitle.toLowerCase();
+    if (lower.contains('domain b') || lower.contains('problem solving')) {
+      return 'B';
+    }
+    if (lower.contains('domain c') || lower.contains('patient management')) {
+      return 'C';
+    }
+    if (lower.contains('domain d') || lower.contains('systems')) return 'D';
+    if (lower.contains('domain e') || lower.contains('interpersonal')) {
+      return 'E';
+    }
+    if (lower.contains('history') || lower.contains('physical')) return 'A';
+    return null;
+  }
+
   // --- Internal helpers ---
 
   Future<void> _sendExaminerOpening() async {
     final section = state.currentSection;
     if (section == null) return;
 
-    state = state.copyWith(isWaitingForAi: true);
+    // Record section start time
+    final timings =
+        Map<String, SectionTiming>.from(state.sectionTimings);
+    timings[section.id] = SectionTiming(
+      sectionId: section.id,
+      startTime: DateTime.now(),
+    );
+    state = state.copyWith(isWaitingForAi: true, sectionTimings: timings);
 
     final apiKey = ref.read(apiKeyProvider).valueOrNull ?? '';
     final systemPrompt = buildExamSystemPrompt(

@@ -24,6 +24,7 @@ class ExaminerTurnResult {
   final List<String> conceptsRemaining;
   final bool shouldAdvance;
   final List<String> redFlags;
+  final String probeType;
 
   const ExaminerTurnResult({
     required this.examinerResponse,
@@ -31,6 +32,7 @@ class ExaminerTurnResult {
     this.conceptsRemaining = const [],
     this.shouldAdvance = false,
     this.redFlags = const [],
+    this.probeType = 'generic',
   });
 
   static ExaminerTurnResult? tryParse(String jsonString) {
@@ -57,6 +59,7 @@ class ExaminerTurnResult {
                 ?.map((e) => e.toString())
                 .toList() ??
             [],
+        probeType: data['probe_type'] as String? ?? 'generic',
       );
     } catch (_) {
       return null;
@@ -102,6 +105,28 @@ class ExamSection {
   });
 }
 
+class SectionTiming {
+  final String sectionId;
+  final DateTime startTime;
+  final DateTime? endTime;
+
+  const SectionTiming({
+    required this.sectionId,
+    required this.startTime,
+    this.endTime,
+  });
+
+  int get elapsedSeconds => endTime != null
+      ? endTime!.difference(startTime).inSeconds
+      : DateTime.now().difference(startTime).inSeconds;
+
+  SectionTiming close() => SectionTiming(
+        sectionId: sectionId,
+        startTime: startTime,
+        endTime: DateTime.now(),
+      );
+}
+
 class ExamSessionState {
   final String caseId;
   final String caseTitle;
@@ -117,6 +142,7 @@ class ExamSessionState {
   final String casePresentation; // Initial presentation text for system prompt
   final bool isTtsSpeaking;
   final bool isExaminerActive;
+  final Map<String, SectionTiming> sectionTimings;
 
   const ExamSessionState({
     this.caseId = '',
@@ -133,6 +159,7 @@ class ExamSessionState {
     this.casePresentation = '',
     this.isTtsSpeaking = false,
     this.isExaminerActive = false,
+    this.sectionTimings = const {},
   });
 
   ExamSection? get currentSection =>
@@ -162,6 +189,7 @@ class ExamSessionState {
     String? casePresentation,
     bool? isTtsSpeaking,
     bool? isExaminerActive,
+    Map<String, SectionTiming>? sectionTimings,
   }) {
     return ExamSessionState(
       caseId: caseId ?? this.caseId,
@@ -179,6 +207,7 @@ class ExamSessionState {
       casePresentation: casePresentation ?? this.casePresentation,
       isTtsSpeaking: isTtsSpeaking ?? this.isTtsSpeaking,
       isExaminerActive: isExaminerActive ?? this.isExaminerActive,
+      sectionTimings: sectionTimings ?? this.sectionTimings,
     );
   }
 }

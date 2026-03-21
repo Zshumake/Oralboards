@@ -33,6 +33,38 @@ class AppColors {
   static const primaryHover = navyLight;
   static const accent = burgundy;
   static const surfaceHover = surfaceAlt;
+
+  // High contrast overrides (WCAG AA+)
+  static const hcBg = Color(0xFFFFFFFF);
+  static const hcSurface = Color(0xFFF5F5F5);
+  static const hcText = Color(0xFF000000);
+  static const hcTextMuted = Color(0xFF333333);
+  static const hcNavy = Color(0xFF0A1F3A);
+  static const hcBurgundy = Color(0xFF6D0E1A);
+  static const hcSuccess = Color(0xFF1A5C3A);
+  static const hcWarning = Color(0xFF8B6508);
+  static const hcDanger = Color(0xFF7A1A1A);
+  static const hcBorder = Color(0xFF666666);
+  static const hcDivider = Color(0xFF999999);
+}
+
+ThemeData buildHighContrastTheme() {
+  final base = buildAppTheme();
+  return base.copyWith(
+    scaffoldBackgroundColor: AppColors.hcBg,
+    cardColor: AppColors.hcSurface,
+    dividerColor: AppColors.hcDivider,
+    colorScheme: const ColorScheme.light(
+      primary: AppColors.hcNavy,
+      secondary: AppColors.hcBurgundy,
+      surface: AppColors.hcSurface,
+      error: AppColors.hcDanger,
+      onPrimary: Colors.white,
+      onSecondary: Colors.white,
+      onSurface: AppColors.hcText,
+      onError: Colors.white,
+    ),
+  );
 }
 
 ThemeData buildAppTheme() {
