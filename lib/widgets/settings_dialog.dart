@@ -371,8 +371,8 @@ class _HighContrastToggle extends ConsumerWidget {
   }
 }
 
-void showSettingsDialog(BuildContext context) {
-  showDialog(
+Future<void> showSettingsDialog(BuildContext context) {
+  return showDialog(
     context: context,
     builder: (_) => const SettingsDialog(),
   );

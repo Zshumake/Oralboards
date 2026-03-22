@@ -53,9 +53,9 @@ class _ExamScreenState extends ConsumerState<ExamScreen>
 
   Future<void> _startExam() async {
     // Check for API key first
-    final apiKey = ref.read(apiKeyProvider).valueOrNull ?? '';
+    var apiKey = ref.read(apiKeyProvider).valueOrNull ?? '';
     if (apiKey.isEmpty) {
-      await showDialog(
+      final action = await showDialog<String>(
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
@@ -72,26 +72,33 @@ class _ExamScreenState extends ConsumerState<ExamScreen>
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                Navigator.pop(context);
-              },
+              onPressed: () => Navigator.pop(ctx, 'back'),
               child: Text('Go Back', style: GoogleFonts.dmSans()),
             ),
             ElevatedButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                showSettingsDialog(context);
-              },
+              onPressed: () => Navigator.pop(ctx, 'settings'),
               child: Text('Open Settings', style: GoogleFonts.dmSans()),
             ),
           ],
         ),
       );
-      // Wait for settings, then try again
-      await Future.delayed(const Duration(milliseconds: 500));
-      final newKey = ref.read(apiKeyProvider).valueOrNull ?? '';
-      if (newKey.isEmpty) return;
+
+      if (action == 'back' || action == null) {
+        if (mounted) Navigator.pop(context);
+        return;
+      }
+
+      // Open settings and wait for it to close
+      if (action == 'settings' && mounted) {
+        await showSettingsDialog(context);
+        // Re-check key after settings dialog closes
+        await ref.read(apiKeyProvider.notifier).build();
+        apiKey = ref.read(apiKeyProvider).valueOrNull ?? '';
+        if (apiKey.isEmpty) {
+          if (mounted) Navigator.pop(context);
+          return;
+        }
+      }
     }
 
     // Start timer — countdown or count-up based on settings
