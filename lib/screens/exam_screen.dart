@@ -236,15 +236,24 @@ class _ExamScreenState extends ConsumerState<ExamScreen>
             ),
 
             // Video tiles
-            SizedBox(
-              height: 180,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                child: Row(
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: SizedBox(
+                height: 320, // Taller area for the "zoom call" background
+                child: Stack(
                   children: [
-                    const Expanded(child: ExaminerTile()),
-                    const SizedBox(width: 12),
-                    const Expanded(child: StudentTile()),
+                    // Main Speaker
+                    const Positioned.fill(
+                      child: ExaminerTile(),
+                    ),
+                    // Picture-in-Picture Student
+                    Positioned(
+                      top: 16,
+                      right: 16,
+                      width: 100,
+                      height: 130,
+                      child: const StudentTile(),
+                    ),
                   ],
                 ),
               ),

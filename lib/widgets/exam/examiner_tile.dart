@@ -54,10 +54,12 @@ class ExaminerTile extends ConsumerWidget {
           children: [
             const Spacer(),
             // Animated avatar
-            SizedBox(
-              width: 100,
-              height: 100,
-              child: AnimatedAvatar(avatarState: avatarSt),
+            Expanded(
+              flex: 6,
+              child: AspectRatio(
+                aspectRatio: 1.0,
+                child: AnimatedAvatar(avatarState: avatarSt),
+              ),
             ),
             const SizedBox(height: 8),
             // Name

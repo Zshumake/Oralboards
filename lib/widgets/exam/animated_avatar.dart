@@ -17,9 +17,12 @@ class _AnimatedAvatarState extends State<AnimatedAvatar>
   late AnimationController _blinkController;
   late AnimationController _mouthController;
   late AnimationController _headController;
+  late AnimationController _nodController;
+  late AnimationController _swayController;
+  late AnimationController _browController;
 
   final _random = Random();
-  bool _isBlinking = false;
+  bool _isSpeakingLoopActive = false;
   double _eyeWanderX = 0;
   double _eyeWanderY = 0;
 
@@ -29,6 +32,11 @@ class _AnimatedAvatarState extends State<AnimatedAvatar>
     _breathController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 4000),
+    )..repeat(reverse: true);
+
+    _swayController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 6000),
     )..repeat(reverse: true);
 
     _blinkController = AnimationController(
@@ -46,8 +54,20 @@ class _AnimatedAvatarState extends State<AnimatedAvatar>
       duration: const Duration(milliseconds: 600),
     );
 
+    _nodController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    _browController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
     _scheduleBlink();
     _scheduleEyeWander();
+    _scheduleNod();
+    _scheduleBrowRaise();
     _updateForState();
   }
 
@@ -62,25 +82,41 @@ class _AnimatedAvatarState extends State<AnimatedAvatar>
   void _updateForState() {
     switch (widget.avatarState) {
       case AvatarState.speaking:
-        _mouthController.repeat(reverse: true);
         _headController.animateTo(0, duration: const Duration(milliseconds: 300));
+        if (!_isSpeakingLoopActive) {
+          _isSpeakingLoopActive = true;
+          _speakSyllableLoop();
+        }
         break;
       case AvatarState.thinking:
-        _mouthController.stop();
-        _mouthController.value = 0;
+        _isSpeakingLoopActive = false;
+        _mouthController.animateTo(0, duration: const Duration(milliseconds: 200));
         _headController.animateTo(1, duration: const Duration(milliseconds: 600));
         break;
       case AvatarState.listening:
-        _mouthController.stop();
-        _mouthController.value = 0;
+        _isSpeakingLoopActive = false;
+        _mouthController.animateTo(0, duration: const Duration(milliseconds: 200));
         _headController.animateTo(0, duration: const Duration(milliseconds: 300));
         break;
       case AvatarState.idle:
-        _mouthController.stop();
-        _mouthController.value = 0;
+        _isSpeakingLoopActive = false;
+        _mouthController.animateTo(0, duration: const Duration(milliseconds: 200));
         _headController.animateTo(0, duration: const Duration(milliseconds: 300));
         break;
     }
+  }
+
+  void _speakSyllableLoop() {
+    if (!mounted || !_isSpeakingLoopActive) return;
+    final targetOpen = 0.2 + _random.nextDouble() * 0.8;
+    final duration = Duration(milliseconds: 80 + _random.nextInt(120));
+    _mouthController.animateTo(targetOpen, duration: duration, curve: Curves.easeInOut).then((_) {
+      if (!mounted || !_isSpeakingLoopActive) return;
+      final closeDuration = Duration(milliseconds: 50 + _random.nextInt(80));
+      _mouthController.animateTo(0.1, duration: closeDuration, curve: Curves.easeInOut).then((_) {
+        _speakSyllableLoop();
+      });
+    });
   }
 
   void _scheduleBlink() {
@@ -88,11 +124,23 @@ class _AnimatedAvatarState extends State<AnimatedAvatar>
     final delay = Duration(milliseconds: 2000 + _random.nextInt(4000));
     Future.delayed(delay, () {
       if (!mounted) return;
-      setState(() => _isBlinking = true);
+      final isDouble = _random.nextDouble() < 0.3; // 30% chance for double blink
+      
+      void completeBlink() {
+        if (!isDouble || !mounted) {
+          _scheduleBlink();
+        } else {
+          _blinkController.forward().then((_) {
+            _blinkController.reverse().then((_) {
+               if (mounted) _scheduleBlink();
+            });
+          });
+        }
+      }
+
       _blinkController.forward().then((_) {
         _blinkController.reverse().then((_) {
-          if (mounted) setState(() => _isBlinking = false);
-          _scheduleBlink();
+          completeBlink();
         });
       });
     });
@@ -119,12 +167,46 @@ class _AnimatedAvatarState extends State<AnimatedAvatar>
     });
   }
 
+  void _scheduleNod() {
+    if (!mounted) return;
+    final delay = Duration(milliseconds: 3000 + _random.nextInt(4000));
+    Future.delayed(delay, () {
+      if (!mounted) return;
+      if (widget.avatarState == AvatarState.listening || widget.avatarState == AvatarState.idle) {
+        _nodController.forward().then((_) {
+          if (mounted) _nodController.reverse();
+        });
+      }
+      _scheduleNod();
+    });
+  }
+
+  void _scheduleBrowRaise() {
+    if (!mounted) return;
+    final delay = Duration(milliseconds: 2000 + _random.nextInt(5000));
+    Future.delayed(delay, () {
+      if (!mounted) return;
+      if (widget.avatarState == AvatarState.speaking || widget.avatarState == AvatarState.idle) {
+        _browController.forward().then((_) {
+          Future.delayed(Duration(milliseconds: 200 + _random.nextInt(500)), () {
+            if (mounted) _browController.reverse();
+          });
+        });
+      }
+      _scheduleBrowRaise();
+    });
+  }
+
   @override
   void dispose() {
+    _isSpeakingLoopActive = false;
     _breathController.dispose();
     _blinkController.dispose();
     _mouthController.dispose();
     _headController.dispose();
+    _swayController.dispose();
+    _nodController.dispose();
+    _browController.dispose();
     super.dispose();
   }
 
@@ -136,25 +218,35 @@ class _AnimatedAvatarState extends State<AnimatedAvatar>
         _blinkController,
         _mouthController,
         _headController,
+        _swayController,
+        _nodController,
+        _browController,
       ]),
       builder: (context, child) {
         final breathScale = 1.0 + (_breathController.value * 0.015);
         final headTilt = _headController.value * 0.05;
+        final swayX = (_swayController.value * 2.0 - 1.0) * 4.0;
+        final swayRotate = (_swayController.value * 2.0 - 1.0) * 0.02;
+        
+        final nodLean = _nodController.value * 4.0;
+        final baseListenLean = widget.avatarState == AvatarState.listening ? -1.5 : 0.0;
+        final totalLeanY = baseListenLean + nodLean;
+        
         final mouthOpen = _mouthController.value;
-        final listenLean = widget.avatarState == AvatarState.listening ? -1.5 : 0.0;
 
         return Transform(
           alignment: Alignment.center,
           transform: Matrix4.identity()
             ..scale(breathScale)
-            ..rotateZ(headTilt)
-            ..translate(0.0, listenLean),
+            ..translate(swayX, totalLeanY)
+            ..rotateZ(headTilt + swayRotate),
           child: CustomPaint(
             painter: _AvatarPainter(
-              isBlinking: _isBlinking,
+              blinkProgress: _blinkController.value,
               mouthOpen: mouthOpen,
               eyeWanderX: _eyeWanderX,
               eyeWanderY: _eyeWanderY,
+              browRaise: _browController.value,
               avatarState: widget.avatarState,
             ),
             size: Size.infinite,
@@ -166,17 +258,19 @@ class _AnimatedAvatarState extends State<AnimatedAvatar>
 }
 
 class _AvatarPainter extends CustomPainter {
-  final bool isBlinking;
+  final double blinkProgress;
   final double mouthOpen;
   final double eyeWanderX;
   final double eyeWanderY;
+  final double browRaise;
   final AvatarState avatarState;
 
   _AvatarPainter({
-    required this.isBlinking,
+    required this.blinkProgress,
     required this.mouthOpen,
     required this.eyeWanderX,
     required this.eyeWanderY,
+    required this.browRaise,
     required this.avatarState,
   });
 
@@ -184,135 +278,329 @@ class _AvatarPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2;
     final cy = size.height / 2;
-    final headRadius = size.width * 0.22;
+    final scale = size.width / 200.0;
 
-    // Shoulders
-    final shoulderPaint = Paint()
-      ..color = const Color(0xFF2A4A6B)
+    final faceCenterY = cy - 20 * scale;
+
+    // Background/Shoulders (Suit Jacket)
+    final suitPaint = Paint()
+      ..color = const Color(0xFF1A2238)
       ..style = PaintingStyle.fill;
-    final shoulderPath = Path()
-      ..moveTo(cx - headRadius * 1.5, cy + headRadius * 1.3)
-      ..quadraticBezierTo(cx, cy + headRadius * 0.8, cx + headRadius * 1.5, cy + headRadius * 1.3)
-      ..lineTo(cx + headRadius * 1.5, size.height)
-      ..lineTo(cx - headRadius * 1.5, size.height)
+    final suitPath = Path()
+      ..moveTo(cx - 95 * scale, size.height)
+      ..quadraticBezierTo(
+          cx - 85 * scale, cy + 40 * scale, cx - 40 * scale, cy + 30 * scale)
+      ..lineTo(cx + 40 * scale, cy + 30 * scale)
+      ..quadraticBezierTo(
+          cx + 85 * scale, cy + 40 * scale, cx + 95 * scale, size.height)
       ..close();
-    canvas.drawPath(shoulderPath, shoulderPaint);
+    canvas.drawPath(suitPath, suitPaint);
+
+    // White Shirt Collar
+    final shirtPaint = Paint()
+      ..color = const Color(0xFFF0F4F8)
+      ..style = PaintingStyle.fill;
+    final shirtPath = Path()
+      ..moveTo(cx, cy + 60 * scale)
+      ..lineTo(cx - 35 * scale, cy + 30 * scale)
+      ..lineTo(cx - 18 * scale, cy + 20 * scale)
+      ..lineTo(cx + 18 * scale, cy + 20 * scale)
+      ..lineTo(cx + 35 * scale, cy + 30 * scale)
+      ..close();
+    canvas.drawPath(shirtPath, shirtPaint);
+
+    // Red Tie
+    final tiePaint = Paint()
+      ..color = const Color(0xFF8B0000)
+      ..style = PaintingStyle.fill;
+    final tiePath = Path()
+      ..moveTo(cx - 10 * scale, cy + 45 * scale)
+      ..lineTo(cx + 10 * scale, cy + 45 * scale)
+      ..lineTo(cx + 15 * scale, cy + 90 * scale)
+      ..lineTo(cx, cy + 110 * scale)
+      ..lineTo(cx - 15 * scale, cy + 90 * scale)
+      ..close();
+    tiePath.addPolygon([
+      Offset(cx - 13 * scale, cy + 30 * scale),
+      Offset(cx + 13 * scale, cy + 30 * scale),
+      Offset(cx + 10 * scale, cy + 48 * scale),
+      Offset(cx - 10 * scale, cy + 48 * scale),
+    ], true);
+    canvas.drawPath(tiePath, tiePaint);
 
     // Neck
+    final skinPaint = Paint()
+      ..color = const Color(0xFFFFDBAC)
+      ..style = PaintingStyle.fill;
+    final neckShadowPaint = Paint()
+      ..color = const Color(0xFFE0B888)
+      ..style = PaintingStyle.fill;
     canvas.drawRect(
       Rect.fromCenter(
-        center: Offset(cx, cy + headRadius * 0.9),
-        width: headRadius * 0.5,
-        height: headRadius * 0.5,
-      ),
-      Paint()..color = const Color(0xFFDEB89C),
+          center: Offset(cx, faceCenterY + 55 * scale),
+          width: 32 * scale,
+          height: 40 * scale),
+      skinPaint,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(
+          center: Offset(cx, faceCenterY + 45 * scale),
+          width: 32 * scale,
+          height: 18 * scale),
+      neckShadowPaint,
     );
 
-    // Head
-    canvas.drawCircle(
-      Offset(cx, cy - headRadius * 0.1),
-      headRadius,
-      Paint()..color = const Color(0xFFDEB89C),
+    // Ears
+    canvas.drawOval(
+      Rect.fromCenter(
+          center: Offset(cx - 43 * scale, faceCenterY + 5 * scale),
+          width: 14 * scale,
+          height: 28 * scale),
+      skinPaint,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(
+          center: Offset(cx + 43 * scale, faceCenterY + 5 * scale),
+          width: 14 * scale,
+          height: 28 * scale),
+      skinPaint,
     );
 
-    // Eyes
-    if (!isBlinking) {
-      final eyeY = cy - headRadius * 0.25 + eyeWanderY;
-      final eyeSpacing = headRadius * 0.35;
-
-      // White of eye
-      final eyeWhitePaint = Paint()..color = Colors.white;
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(cx - eyeSpacing, eyeY),
-          width: headRadius * 0.28,
-          height: headRadius * 0.18,
-        ),
-        eyeWhitePaint,
-      );
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(cx + eyeSpacing, eyeY),
-          width: headRadius * 0.28,
-          height: headRadius * 0.18,
-        ),
-        eyeWhitePaint,
-      );
-
-      // Pupils
-      final pupilPaint = Paint()..color = const Color(0xFF1B3A5C);
-      canvas.drawCircle(
-        Offset(cx - eyeSpacing + eyeWanderX, eyeY),
-        headRadius * 0.06,
-        pupilPaint,
-      );
-      canvas.drawCircle(
-        Offset(cx + eyeSpacing + eyeWanderX, eyeY),
-        headRadius * 0.06,
-        pupilPaint,
-      );
-    } else {
-      // Closed eyes (lines)
-      final eyeY = cy - headRadius * 0.25;
-      final eyeSpacing = headRadius * 0.35;
-      final linePaint = Paint()
-        ..color = const Color(0xFF4A3728)
-        ..strokeWidth = 1.5
-        ..style = PaintingStyle.stroke;
-      canvas.drawLine(
-        Offset(cx - eyeSpacing - headRadius * 0.1, eyeY),
-        Offset(cx - eyeSpacing + headRadius * 0.1, eyeY),
-        linePaint,
-      );
-      canvas.drawLine(
-        Offset(cx + eyeSpacing - headRadius * 0.1, eyeY),
-        Offset(cx + eyeSpacing + headRadius * 0.1, eyeY),
-        linePaint,
-      );
-    }
-
-    // Mouth
-    final mouthY = cy + headRadius * 0.25;
-    if (mouthOpen > 0.1) {
-      // Open mouth (speaking)
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(cx, mouthY),
-          width: headRadius * 0.3,
-          height: headRadius * 0.15 * mouthOpen,
-        ),
-        Paint()..color = const Color(0xFF6B3A3A),
-      );
-    } else {
-      // Closed mouth (line)
-      canvas.drawLine(
-        Offset(cx - headRadius * 0.15, mouthY),
-        Offset(cx + headRadius * 0.15, mouthY),
-        Paint()
-          ..color = const Color(0xFF8B6B5C)
-          ..strokeWidth = 1.5
-          ..style = PaintingStyle.stroke,
-      );
-    }
+    // Face shape
+    final jawDrop = mouthOpen * 8 * scale;
+    final facePath = Path()
+      ..moveTo(cx - 40 * scale, faceCenterY - 10 * scale)
+      ..quadraticBezierTo(cx - 40 * scale, faceCenterY + 30 * scale,
+          cx - 25 * scale, faceCenterY + 45 * scale + (jawDrop * 0.5))
+      ..quadraticBezierTo(
+          cx, faceCenterY + 55 * scale + jawDrop, cx + 25 * scale, faceCenterY + 45 * scale + (jawDrop * 0.5))
+      ..quadraticBezierTo(
+          cx + 40 * scale, faceCenterY + 30 * scale, cx + 40 * scale, faceCenterY - 10 * scale)
+      ..quadraticBezierTo(
+          cx + 40 * scale, faceCenterY - 50 * scale, cx, faceCenterY - 50 * scale)
+      ..quadraticBezierTo(
+          cx - 40 * scale, faceCenterY - 50 * scale, cx - 40 * scale, faceCenterY - 10 * scale)
+      ..close();
+    canvas.drawPath(facePath, skinPaint);
 
     // Hair
-    final hairPaint = Paint()..color = const Color(0xFF3A2A1A);
+    final hairPaint = Paint()
+      ..color = const Color(0xFF2C1B18)
+      ..style = PaintingStyle.fill;
     final hairPath = Path()
-      ..addArc(
-        Rect.fromCircle(center: Offset(cx, cy - headRadius * 0.1), radius: headRadius),
-        -pi * 0.85,
-        pi * 0.7,
-      )
+      ..moveTo(cx - 42 * scale, faceCenterY - 10 * scale)
+      ..quadraticBezierTo(
+          cx - 45 * scale, faceCenterY - 55 * scale, cx, faceCenterY - 60 * scale)
+      ..quadraticBezierTo(
+          cx + 45 * scale, faceCenterY - 55 * scale, cx + 42 * scale, faceCenterY - 10 * scale)
+      ..quadraticBezierTo(
+          cx + 35 * scale, faceCenterY - 30 * scale, cx + 15 * scale, faceCenterY - 35 * scale)
+      ..quadraticBezierTo(
+          cx, faceCenterY - 30 * scale, cx - 15 * scale, faceCenterY - 35 * scale)
+      ..quadraticBezierTo(
+          cx - 35 * scale, faceCenterY - 30 * scale, cx - 42 * scale, faceCenterY - 10 * scale)
       ..close();
     canvas.drawPath(hairPath, hairPaint);
+
+    // Eyebrows
+    final eyebrowPaint = Paint()
+      ..color = const Color(0xFF2C1B18)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3 * scale
+      ..strokeCap = StrokeCap.round;
+
+    final browMidY = faceCenterY -
+        20 * scale +
+        (avatarState == AvatarState.thinking ? 3 * scale : (-1.5 * browRaise * scale));
+
+    canvas.drawPath(
+      Path()
+        ..moveTo(cx - 30 * scale, faceCenterY - 18 * scale - (browRaise * scale))
+        ..quadraticBezierTo(
+            cx - 20 * scale, faceCenterY - 24 * scale - (browRaise * 1.5 * scale), cx - 8 * scale, browMidY),
+      eyebrowPaint,
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(cx + 30 * scale, faceCenterY - 18 * scale - (browRaise * scale))
+        ..quadraticBezierTo(
+            cx + 20 * scale, faceCenterY - 24 * scale - (browRaise * 1.5 * scale), cx + 8 * scale, browMidY),
+      eyebrowPaint,
+    );
+
+    // Nose
+    final nosePaint = Paint()
+      ..color = const Color(0xFFD3A378)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8 * scale
+      ..strokeCap = StrokeCap.round;
+    final nosePath = Path()
+      ..moveTo(cx, faceCenterY - 5 * scale)
+      ..lineTo(cx, faceCenterY + 15 * scale)
+      ..lineTo(cx + 6 * scale, faceCenterY + 18 * scale)
+      ..moveTo(cx - 5 * scale, faceCenterY + 18 * scale)
+      ..quadraticBezierTo(
+          cx, faceCenterY + 22 * scale, cx + 5 * scale, faceCenterY + 18 * scale);
+    canvas.drawPath(nosePath, nosePaint);
+
+    // Eyes
+    final eyeY = faceCenterY - 5 * scale;
+    final eyeXOffset = 18 * scale;
+    final eyeWidth = 16 * scale;
+    final eyeHeight = 8 * scale;
+
+    final scleraPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    final irisPaint = Paint()
+      ..color = const Color(0xFF4B3621)
+      ..style = PaintingStyle.fill;
+    final pupilPaint = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.fill;
+    final catchlightPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.8)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawOval(
+        Rect.fromCenter(
+            center: Offset(cx - eyeXOffset, eyeY),
+            width: eyeWidth,
+            height: eyeHeight),
+        scleraPaint);
+    canvas.drawOval(
+        Rect.fromCenter(
+            center: Offset(cx + eyeXOffset, eyeY),
+            width: eyeWidth,
+            height: eyeHeight),
+        scleraPaint);
+
+    canvas.save();
+    final clipPath = Path()
+      ..addOval(Rect.fromCenter(
+          center: Offset(cx - eyeXOffset, eyeY),
+          width: eyeWidth,
+          height: eyeHeight))
+      ..addOval(Rect.fromCenter(
+          center: Offset(cx + eyeXOffset, eyeY),
+          width: eyeWidth,
+          height: eyeHeight));
+    canvas.clipPath(clipPath);
+
+    final irisX = eyeWanderX * scale;
+    final irisY = eyeWanderY * scale;
+
+    canvas.drawCircle(
+        Offset(cx - eyeXOffset + irisX, eyeY + irisY), 4 * scale, irisPaint);
+    canvas.drawCircle(
+        Offset(cx - eyeXOffset + irisX, eyeY + irisY), 2 * scale, pupilPaint);
+    canvas.drawCircle(
+        Offset(cx - eyeXOffset + irisX + 1.5 * scale,
+            eyeY + irisY - 1.5 * scale),
+        1 * scale,
+        catchlightPaint);
+
+    canvas.drawCircle(
+        Offset(cx + eyeXOffset + irisX, eyeY + irisY), 4 * scale, irisPaint);
+    canvas.drawCircle(
+        Offset(cx + eyeXOffset + irisX, eyeY + irisY), 2 * scale, pupilPaint);
+    canvas.drawCircle(
+        Offset(cx + eyeXOffset + irisX + 1.5 * scale,
+            eyeY + irisY - 1.5 * scale),
+        1 * scale,
+        catchlightPaint);
+        
+    // Eyelid skin covering the eye during a blink
+    if (blinkProgress > 0) {
+      final lidPaint = Paint()..color = const Color(0xFFC49A6C)..style = PaintingStyle.fill;
+      canvas.drawRect(Rect.fromLTWH(cx - eyeXOffset - eyeWidth, eyeY - eyeHeight, eyeWidth*2 + eyeXOffset*2, eyeHeight * 2 * blinkProgress), lidPaint);
+    }
+    
+    canvas.restore();
+
+    // Eyelashes line, moving down with blinkProgress
+    final lashPaint = Paint()
+      ..color = const Color(0xFF2C1B18)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6 * scale;
+      
+    final lashCurveY = eyeY - 6 * scale + (blinkProgress * 6 * scale);
+    final lashEndsY = eyeY + blinkProgress * (eyeHeight/2);
+    
+    canvas.drawPath(
+        Path()
+          ..moveTo(cx - eyeXOffset - 8 * scale, lashEndsY)
+          ..quadraticBezierTo(cx - eyeXOffset, lashCurveY,
+              cx - eyeXOffset + 8 * scale, lashEndsY),
+        lashPaint);
+    canvas.drawPath(
+        Path()
+          ..moveTo(cx + eyeXOffset - 8 * scale, lashEndsY)
+          ..quadraticBezierTo(cx + eyeXOffset, lashCurveY,
+              cx + eyeXOffset + 8 * scale, lashEndsY),
+        lashPaint);
+
+    // Mouth
+    final mouthY = faceCenterY + 32 * scale;
+    final lipColor = const Color(0xFFC88A7A);
+    final darkMouthColor = const Color(0xFF3B1F20);
+    final teethColor = const Color(0xFFEEEEEE);
+
+    if (mouthOpen > 0.05) {
+      final mOpenHeight = 15 * mouthOpen * scale;
+      final mouthPath = Path()
+        ..moveTo(cx - 10 * scale, mouthY)
+        ..quadraticBezierTo(cx, mouthY - 4 * scale, cx + 10 * scale, mouthY)
+        ..quadraticBezierTo(
+            cx, mouthY + mOpenHeight, cx - 10 * scale, mouthY)
+        ..close();
+      canvas.drawPath(mouthPath, Paint()..color = darkMouthColor);
+
+      canvas.save();
+      canvas.clipPath(mouthPath);
+      canvas.drawRect(
+          Rect.fromLTWH(cx - 10 * scale, mouthY - 4 * scale, 20 * scale, 5 * scale),
+          Paint()..color = teethColor);
+      canvas.restore();
+
+      canvas.drawPath(
+          mouthPath,
+          Paint()
+            ..color = lipColor
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2 * scale);
+    } else {
+      final lipPath = Path()
+        ..moveTo(cx - 12 * scale, mouthY + 1 * scale)
+        ..quadraticBezierTo(
+            cx, mouthY + 4 * scale, cx + 12 * scale, mouthY + 1 * scale);
+      canvas.drawPath(
+          lipPath,
+          Paint()
+            ..color = lipColor
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2.5 * scale
+            ..strokeCap = StrokeCap.round);
+
+      final centerLipPath = Path()
+        ..moveTo(cx - 10 * scale, mouthY + 1 * scale)
+        ..quadraticBezierTo(cx, mouthY + 2 * scale, cx + 10 * scale, mouthY + 1 * scale);
+      canvas.drawPath(
+          centerLipPath,
+          Paint()
+            ..color = darkMouthColor
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1 * scale);
+    }
   }
 
   @override
   bool shouldRepaint(covariant _AvatarPainter old) {
-    return old.isBlinking != isBlinking ||
+    return old.blinkProgress != blinkProgress ||
         old.mouthOpen != mouthOpen ||
         old.eyeWanderX != eyeWanderX ||
         old.eyeWanderY != eyeWanderY ||
+        old.browRaise != browRaise ||
         old.avatarState != avatarState;
   }
 }
