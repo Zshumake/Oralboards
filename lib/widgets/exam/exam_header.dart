@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../providers/exam_session_provider.dart';
 import '../../providers/timer_provider.dart';
 import '../../theme/app_theme.dart';
+import '../settings_dialog.dart';
 
 class ExamHeader extends ConsumerWidget {
   final VoidCallback onBack;
@@ -156,14 +157,33 @@ class ExamHeader extends ConsumerWidget {
               ),
             ),
 
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
+
+            // Settings gear
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => showSettingsDialog(context),
+                borderRadius: BorderRadius.circular(6),
+                child: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: Icon(
+                    Icons.settings_outlined,
+                    size: 18,
+                    color: AppColors.navy.withValues(alpha: 0.6),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 8),
 
             // End Exam button
             Material(
               color: AppColors.burgundy,
               borderRadius: BorderRadius.circular(6),
               child: InkWell(
-                onTap: onEndExam,
+                onTap: () => _confirmEndExam(context, onEndExam),
                 borderRadius: BorderRadius.circular(6),
                 child: Padding(
                   padding:
@@ -181,6 +201,43 @@ class ExamHeader extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _confirmEndExam(BuildContext context, VoidCallback onConfirm) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          'End Exam?',
+          style: GoogleFonts.playfairDisplay(
+            fontWeight: FontWeight.w700,
+            color: AppColors.navy,
+          ),
+        ),
+        content: Text(
+          'Remaining sections will be scored as not attempted.',
+          style: GoogleFonts.sourceSerif4(color: AppColors.text),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Continue Exam',
+                style: GoogleFonts.dmSans(color: AppColors.textMuted)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              onConfirm();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.burgundy,
+              foregroundColor: Colors.white,
+            ),
+            child: Text('End Exam', style: GoogleFonts.dmSans()),
+          ),
+        ],
       ),
     );
   }

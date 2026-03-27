@@ -140,23 +140,43 @@ class _SystemMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isError = text.toLowerCase().startsWith('error');
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 40),
       child: Center(
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: AppColors.surfaceAlt,
-            borderRadius: BorderRadius.circular(20),
+            color: isError
+                ? AppColors.danger.withValues(alpha: 0.08)
+                : AppColors.surfaceAlt,
+            borderRadius: BorderRadius.circular(isError ? 8 : 20),
+            border: isError
+                ? Border.all(color: AppColors.danger.withValues(alpha: 0.3))
+                : null,
           ),
-          child: Text(
-            text,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.dmSans(
-              fontSize: 12,
-              fontStyle: FontStyle.italic,
-              color: AppColors.textMuted,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isError) ...[
+                Icon(Icons.warning_amber_rounded,
+                    size: 16, color: AppColors.danger),
+                const SizedBox(width: 8),
+              ],
+              Flexible(
+                child: Text(
+                  isError ? text.replaceFirst(RegExp(r'^Error[:\s]*', caseSensitive: false), '') : text,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 12,
+                    fontStyle: isError ? FontStyle.normal : FontStyle.italic,
+                    fontWeight: isError ? FontWeight.w500 : FontWeight.normal,
+                    color: isError ? AppColors.danger : AppColors.textMuted,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

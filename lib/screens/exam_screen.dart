@@ -135,9 +135,23 @@ class _ExamScreenState extends ConsumerState<ExamScreen>
   }
 
   void _tryAgain() {
+    _hasShownTimeUp = false;
     ref.read(examSessionProvider.notifier).loadCase(widget.caseData);
     ref.read(timerProvider.notifier).reset();
-    ref.read(timerProvider.notifier).toggle();
+
+    // Replicate timer setup from _startExam
+    final examSettings =
+        ref.read(examSettingsProvider).valueOrNull ?? const ExamSettings();
+    final sectionCount =
+        ref.read(examSessionProvider).examSections.length;
+    if (examSettings.isTimedMode) {
+      ref.read(timerProvider.notifier).startCountdown(
+            examSettings.examDurationMinutes * 60,
+            sectionCount: sectionCount,
+          );
+    } else {
+      ref.read(timerProvider.notifier).toggle();
+    }
     ref.read(examSessionProvider.notifier).startExam();
   }
 

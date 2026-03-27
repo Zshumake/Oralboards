@@ -106,7 +106,8 @@ class _ExamInputBarState extends ConsumerState<ExamInputBar>
   @override
   Widget build(BuildContext context) {
     final examState = ref.watch(examSessionProvider);
-    final isDisabled = examState.isWaitingForAi || examState.isTtsSpeaking;
+    final isSendDisabled = examState.isWaitingForAi || examState.isTtsSpeaking;
+    final isInputDisabled = examState.isWaitingForAi; // Allow typing during TTS
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -135,7 +136,7 @@ class _ExamInputBarState extends ConsumerState<ExamInputBar>
                           : AppColors.surfaceAlt,
                       borderRadius: BorderRadius.circular(20),
                       child: InkWell(
-                        onTap: isDisabled ? null : _toggleRecording,
+                        onTap: isSendDisabled ? null : _toggleRecording,
                         borderRadius: BorderRadius.circular(20),
                         child: Padding(
                           padding: const EdgeInsets.all(10),
@@ -144,7 +145,7 @@ class _ExamInputBarState extends ConsumerState<ExamInputBar>
                             size: 20,
                             color: _isRecording
                                 ? Colors.white
-                                : (isDisabled
+                                : (isSendDisabled
                                     ? AppColors.textLight
                                     : AppColors.navy),
                           ),
@@ -166,7 +167,7 @@ class _ExamInputBarState extends ConsumerState<ExamInputBar>
                 child: TextField(
                   controller: _controller,
                   focusNode: _focusNode,
-                  enabled: !isDisabled,
+                  enabled: !isInputDisabled,
                   maxLines: 4,
                   minLines: 1,
                   textInputAction: TextInputAction.send,
@@ -178,9 +179,11 @@ class _ExamInputBarState extends ConsumerState<ExamInputBar>
                     color: AppColors.text,
                   ),
                   decoration: InputDecoration(
-                    hintText: isDisabled
+                    hintText: isInputDisabled
                         ? 'Examiner is responding...'
-                        : 'Type your response...',
+                        : (examState.isTtsSpeaking
+                            ? 'Type while examiner speaks...'
+                            : 'Type your response...'),
                     hintStyle: GoogleFonts.sourceSerif4(
                       color: AppColors.textLight,
                       fontSize: 14,
@@ -203,17 +206,17 @@ class _ExamInputBarState extends ConsumerState<ExamInputBar>
             Padding(
               padding: const EdgeInsets.only(left: 8, bottom: 2),
               child: Material(
-                color: isDisabled ? AppColors.surfaceAlt : AppColors.navy,
+                color: isSendDisabled ? AppColors.surfaceAlt : AppColors.navy,
                 borderRadius: BorderRadius.circular(20),
                 child: InkWell(
-                  onTap: isDisabled ? null : _submit,
+                  onTap: isSendDisabled ? null : _submit,
                   borderRadius: BorderRadius.circular(20),
                   child: Padding(
                     padding: const EdgeInsets.all(10),
                     child: Icon(
                       Icons.send,
                       size: 20,
-                      color: isDisabled ? AppColors.textLight : Colors.white,
+                      color: isSendDisabled ? AppColors.textLight : Colors.white,
                     ),
                   ),
                 ),

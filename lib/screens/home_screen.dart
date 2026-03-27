@@ -16,6 +16,8 @@ import 'exam_screen.dart';
 import 'history_screen.dart';
 import 'multi_case_setup_screen.dart';
 import 'study_session_screen.dart';
+import '../widgets/settings_dialog.dart';
+import '../providers/settings_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -46,8 +48,55 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     super.dispose();
   }
 
-  void _openCase(CaseModel caseData) {
+  Future<void> _openCase(CaseModel caseData) async {
     final isExamMode = ref.read(isExamModeProvider);
+
+    // Gate exam mode behind API key check
+    if (isExamMode) {
+      final apiKey = ref.read(apiKeyProvider).valueOrNull ?? '';
+      if (apiKey.isEmpty) {
+        final action = await showDialog<String>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(
+              'API Key Required',
+              style: GoogleFonts.playfairDisplay(
+                fontWeight: FontWeight.w700,
+                color: AppColors.navy,
+              ),
+            ),
+            content: Text(
+              'Exam mode requires a Gemini API key for the AI examiner. Please add your key in Settings.',
+              style: GoogleFonts.sourceSerif4(color: AppColors.text),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, 'cancel'),
+                child: Text('Cancel', style: GoogleFonts.dmSans()),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, 'settings'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.navy,
+                  foregroundColor: Colors.white,
+                ),
+                child: Text('Open Settings', style: GoogleFonts.dmSans()),
+              ),
+            ],
+          ),
+        );
+
+        if (action == 'settings' && mounted) {
+          await showSettingsDialog(context);
+          final newKey = ref.read(apiKeyProvider).valueOrNull ?? '';
+          if (newKey.isEmpty) return; // Still no key, don't navigate
+        } else {
+          return; // Cancelled
+        }
+      }
+    }
+
+    if (!mounted) return;
     Navigator.of(context).push(
       PageRouteBuilder(
         pageBuilder: (_, __, ___) => isExamMode
@@ -208,12 +257,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                   ],
                                 ),
                               ),
+                              const SizedBox(width: 16),
+                              GestureDetector(
+                                onTap: () => showSettingsDialog(context),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.settings_outlined,
+                                      size: 14,
+                                      color: AppColors.navy,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'SETTINGS',
+                                      style: GoogleFonts.dmSans(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.navy,
+                                        letterSpacing: 1.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 24),
                           // Mode toggle
                           _ModeToggle(),
                           const SizedBox(height: 16),
+                          // API key banner when not set
+                          _ApiKeyBanner(),
+                          const SizedBox(height: 4),
                           // Due reviews
                           const DueReviewsCard(),
                           // Streak & Goals
@@ -605,6 +681,59 @@ class _RecommendationsSection extends ConsumerWidget {
           const SizedBox(height: 28),
           Container(height: 1, color: AppColors.divider),
           const SizedBox(height: 28),
+        ],
+      ),
+    );
+  }
+}
+
+/// Banner shown when API key is not configured
+class _ApiKeyBanner extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final apiKey = ref.watch(apiKeyProvider).valueOrNull ?? '';
+    if (apiKey.isNotEmpty) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.warning.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.key, size: 18, color: AppColors.warning),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Add your Gemini API key to enable AI-powered exam simulation and feedback.',
+              style: GoogleFonts.sourceSerif4(
+                fontSize: 13,
+                color: AppColors.text,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          GestureDetector(
+            onTap: () => showSettingsDialog(context),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.navy,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                'Set Up',
+                style: GoogleFonts.dmSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
