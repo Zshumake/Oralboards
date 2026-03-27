@@ -1,0 +1,59 @@
+2026-03-27 SCOPING PHASE
+===========================
+
+EXISTING CASES (37 total):
+- Post-Traumatic Agitation (TBI)
+- Amyotrophic Lateral Sclerosis (ALS)
+- Cancer Rehabilitation (Lymphedema)
+- Post-Amputation Rehabilitation
+- Prosthetics (Upper Limb Amputation)
+- Cardiac Rehabilitation (Post-CABG)
+- Carpal Tunnel Syndrome (CTS)
+- Central Cord Syndrome (SCI)
+- Cerebral Palsy (Spastic Diplegia)
+- Cervical Dystonia (Torticollis)
+- Common Fibular Neuropathy
+- Complex Regional Pain Syndrome (CRPS) x2
+- Dermatomyositis
+- Diabetic Lumbosacral Radiculoplexus Neuropathy
+- Disorder of Consciousness / PSH
+- Duchenne Muscular Dystrophy
+- Hemiplegic Shoulder Pain
+- Calcific Tendinopathy
+- Knee Osteoarthritis / Meniscal
+- Lumbar Spondylosis / Neurogenic Claudication
+- Osteoporotic Vertebral Compression Fracture
+- Pediatric TBI / Hydrocephalus
+- Post-Traumatic Headache / Vestibular
+- Posterior Heel Pain (Adolescent)
+- Progressive Neurologic Loss (Chronic SCI)
+- Pulmonary Embolism in SCI
+- Radial Neuropathy
+- Rheumatoid Arthritis (Cervical)
+- Spina Bifida / Neurogenic Bladder
+- Subacute Lumbar Radiculopathy
+- UCL Injury
+- VTE in Intracranial Hemorrhage
+- Inflammatory Proximal Girdle Aching
+- Intracranial Mass / Cancer Rehab
+- Acute Inflammatory Demyelinating Polyradiculoneuropathy (AIDP/GBS)
+
+CASE FORMAT:
+- CaseModel(id, title, url, sections)
+- Sections follow this pattern:
+  1. Initial Presentation (clinical vignette)
+  2. History & Systems Review (what to ask/look for)
+  3. Physical Examination Findings (vitals, exam)
+  4. DOMAIN B: PROBLEM SOLVING (transition narration)
+  5. + Differential diagnosis question
+  6. + Diagnostic workup question
+  7. + Challenge question
+  8. + Challenge answer
+  9. DOMAIN C: PATIENT MANAGEMENT (transition narration)
+  10. + Management question(s)
+  11. DOMAIN D: SYSTEMS-BASED PRACTICE (transition narration)
+  12. + Systems question
+  13. DOMAIN E: INTERPERSONAL AND COMMUNICATION SKILLS (transition narration)
+  14. + Communication/ethics question
+
+TARGET: 50 novel cases covering PM&R board content areas
