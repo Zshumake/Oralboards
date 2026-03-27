@@ -282,6 +282,29 @@ class _AvatarPainter extends CustomPainter {
 
     final faceCenterY = cy - 20 * scale;
 
+    // Neck (drawn first so shirt/tie overlay it)
+    final skinPaint = Paint()
+      ..color = const Color(0xFFFFDBAC)
+      ..style = PaintingStyle.fill;
+    final neckShadowPaint = Paint()
+      ..color = const Color(0xFFE0B888)
+      ..style = PaintingStyle.fill;
+    // Shorter neck that doesn't extend below the collar line
+    canvas.drawRect(
+      Rect.fromCenter(
+          center: Offset(cx, faceCenterY + 42 * scale),
+          width: 30 * scale,
+          height: 24 * scale),
+      skinPaint,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(
+          center: Offset(cx, faceCenterY + 38 * scale),
+          width: 30 * scale,
+          height: 14 * scale),
+      neckShadowPaint,
+    );
+
     // Background/Shoulders (Suit Jacket)
     final suitPaint = Paint()
       ..color = const Color(0xFF1A2238)
@@ -327,28 +350,6 @@ class _AvatarPainter extends CustomPainter {
       Offset(cx - 10 * scale, cy + 48 * scale),
     ], true);
     canvas.drawPath(tiePath, tiePaint);
-
-    // Neck
-    final skinPaint = Paint()
-      ..color = const Color(0xFFFFDBAC)
-      ..style = PaintingStyle.fill;
-    final neckShadowPaint = Paint()
-      ..color = const Color(0xFFE0B888)
-      ..style = PaintingStyle.fill;
-    canvas.drawRect(
-      Rect.fromCenter(
-          center: Offset(cx, faceCenterY + 55 * scale),
-          width: 32 * scale,
-          height: 40 * scale),
-      skinPaint,
-    );
-    canvas.drawOval(
-      Rect.fromCenter(
-          center: Offset(cx, faceCenterY + 45 * scale),
-          width: 32 * scale,
-          height: 18 * scale),
-      neckShadowPaint,
-    );
 
     // Ears
     canvas.drawOval(

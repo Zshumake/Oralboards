@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/case_model.dart';
 import '../models/exam_models.dart';
 import '../models/multi_case_session.dart';
@@ -52,13 +53,17 @@ class _ExamScreenState extends ConsumerState<ExamScreen>
   }
 
   Future<void> _startExam() async {
-    // Check for API key first
+    // Check for API key first — wait for provider to load
+    await ref.read(apiKeyProvider.future);
     var apiKey = ref.read(apiKeyProvider).valueOrNull ?? '';
     if (apiKey.isEmpty) {
+      if (!mounted) return;
       final action = await showDialog<String>(
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           title: Text(
             'API Key Required',
             style: GoogleFonts.playfairDisplay(
@@ -66,9 +71,29 @@ class _ExamScreenState extends ConsumerState<ExamScreen>
               color: AppColors.navy,
             ),
           ),
-          content: Text(
-            'Exam mode requires a Gemini API key for the AI examiner. Please add your key in Settings.',
-            style: GoogleFonts.sourceSerif4(color: AppColors.text),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Exam mode requires a Gemini API key for the AI examiner.',
+                style: GoogleFonts.sourceSerif4(color: AppColors.text),
+              ),
+              const SizedBox(height: 12),
+              GestureDetector(
+                onTap: () => launchUrl(
+                    Uri.parse('https://aistudio.google.com/app/apikey')),
+                child: Text(
+                  'Get a free API key here \u2192',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.burgundy,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            ],
           ),
           actions: [
             TextButton(
@@ -77,7 +102,11 @@ class _ExamScreenState extends ConsumerState<ExamScreen>
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, 'settings'),
-              child: Text('Open Settings', style: GoogleFonts.dmSans()),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.navy,
+                foregroundColor: Colors.white,
+              ),
+              child: Text('Enter API Key', style: GoogleFonts.dmSans()),
             ),
           ],
         ),
@@ -91,8 +120,8 @@ class _ExamScreenState extends ConsumerState<ExamScreen>
       // Open settings and wait for it to close
       if (action == 'settings' && mounted) {
         await showSettingsDialog(context);
-        // Re-check key after settings dialog closes
-        await ref.read(apiKeyProvider.notifier).build();
+        // Force refresh the provider after settings dialog
+        await ref.read(apiKeyProvider.future);
         apiKey = ref.read(apiKeyProvider).valueOrNull ?? '';
         if (apiKey.isEmpty) {
           if (mounted) Navigator.pop(context);
@@ -346,18 +375,29 @@ class _ExamScreenState extends ConsumerState<ExamScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.medical_services_outlined,
-            size: 48,
-            color: AppColors.navy.withValues(alpha: 0.3),
+          const SizedBox(
+            width: 32,
+            height: 32,
+            child: CircularProgressIndicator(
+              color: AppColors.navy,
+              strokeWidth: 2.5,
+            ),
           ),
           const SizedBox(height: 16),
           Text(
-            'Preparing your examination...',
+            'Connecting to AI examiner...',
             style: GoogleFonts.sourceSerif4(
               fontSize: 16,
               fontStyle: FontStyle.italic,
               color: AppColors.textMuted,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'This may take a few seconds',
+            style: GoogleFonts.dmSans(
+              fontSize: 12,
+              color: AppColors.textLight,
             ),
           ),
         ],

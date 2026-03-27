@@ -517,7 +517,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'Data sourced from PM&R Recap for educational purposes.',
+                              'Original cases for PM&R oral board preparation.',
                               style: GoogleFonts.sourceSerif4(
                                 fontSize: 13,
                                 fontStyle: FontStyle.italic,
