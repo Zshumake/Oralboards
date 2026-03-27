@@ -87,7 +87,7 @@ class AnalyticsNotifier extends AsyncNotifier<WeakAreaAnalysis> {
     }
 
     final domainSummaries = <String, DomainSummary>{};
-    for (final d in ['B', 'C', 'D', 'E']) {
+    for (final d in ['A', 'B', 'C', 'D', 'E']) {
       domainSummaries[d] = DomainSummary(
         domain: d,
         domainName: _domainNames[d] ?? d,

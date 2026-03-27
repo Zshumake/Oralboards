@@ -158,6 +158,7 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
       conceptsMissed: allConceptsRemaining.toList(),
       redFlags: allRedFlags.toList(),
       turnsTaken: turnCount,
+      domain: section.domain,
     );
 
     final scores = Map<String, SectionScore>.from(state.sectionScores);
@@ -209,6 +210,7 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
       sectionTitle: section.title,
       conceptsMissed: ['Section skipped'],
       turnsTaken: 0,
+      domain: section.domain,
     );
 
     if (state.isLastSection) {
@@ -246,6 +248,7 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
           sectionTitle: section.title,
           conceptsMissed: ['Section not attempted'],
           turnsTaken: 0,
+          domain: section.domain,
         );
       }
     }
@@ -304,7 +307,7 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
             conceptsHitList: s.conceptsHit,
             conceptsMissedList: s.conceptsMissed,
             redFlagsList: s.redFlags,
-            domain: _inferDomain(s.sectionTitle),
+            domain: s.domain ?? _inferDomain(s.sectionTitle),
           );
         })
         .toList();
@@ -497,6 +500,7 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
   List<ExamSection> _processExamSections(CaseModel data) {
     final result = <ExamSection>[];
     final sections = data.sections;
+    String? currentDomain; // Track ABPMR domain through section processing
 
     for (var i = 0; i < sections.length; i++) {
       final current = sections[i];
@@ -513,17 +517,22 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
       // Skip domain headers (e.g., "DOMAIN B: PROBLEM SOLVING")
       if (titleLower.startsWith('domain ') &&
           !current.title.trim().startsWith('+')) {
+        // Extract domain letter from header
+        final domainMatch = RegExp(r'domain\s+([a-e])', caseSensitive: false)
+            .firstMatch(titleLower);
+        if (domainMatch != null) {
+          currentDomain = domainMatch.group(1)!.toUpperCase();
+        }
         // Domain headers that contain scenario text become context narration
         if (current.content.isNotEmpty &&
             current.content.length > 50) {
-          // This is a domain transition with new clinical info — add as system context
-          // The examiner will narrate this before the next question
           result.add(ExamSection(
             id: 'domain-$i',
             title: current.title,
             prompt:
                 'Please relay the following clinical update to the candidate, then ask them how they would proceed: ${current.content}',
             modelAnswer: current.content,
+            domain: currentDomain,
           ));
         }
         continue;
@@ -541,6 +550,7 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
           title: current.title.replaceFirst(RegExp(r'^\+\s*'), ''),
           prompt: current.content,
           modelAnswer: next!.content,
+          domain: currentDomain,
         ));
         i++; // skip the answer section
         continue;
@@ -558,11 +568,12 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
           title: cleanTitle,
           prompt: cleanTitle,
           modelAnswer: current.content,
+          domain: currentDomain,
         ));
         continue;
       }
 
-      // History/exam sections become open-ended questions
+      // History/exam sections become Domain A (Data Acquisition) questions
       if (titleLower.contains('history') ||
           titleLower.contains('physical examination')) {
         result.add(ExamSection(
@@ -571,6 +582,7 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
           prompt:
               'Regarding the ${current.title.toLowerCase()}, what would you like to assess or review?',
           modelAnswer: current.content,
+          domain: 'A',
         ));
         continue;
       }

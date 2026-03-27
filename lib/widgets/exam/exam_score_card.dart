@@ -18,6 +18,22 @@ class ExamScoreCard extends StatelessWidget {
     required this.onTryAgain,
   });
 
+  static const _domainNames = {
+    'A': 'Data Acquisition',
+    'B': 'Problem Solving',
+    'C': 'Patient Management',
+    'D': 'Systems-Based Practice',
+    'E': 'Interpersonal & Communication Skills',
+  };
+
+  static const _abpmrQuestions = {
+    'A': 'Did the candidate identify the appropriate data required to correctly diagnose and manage the patient?',
+    'B': 'Did the candidate collect data to select among reasonable alternative diagnoses while ensuring patient stabilization?',
+    'C': 'Did the candidate treat or direct appropriate treatment(s) at the appropriate times?',
+    'D': 'Did the treatment plan include proper referral and appropriate risk/benefit analysis?',
+    'E': 'Is the candidate able to provide appropriate explanations and respond ethically and sensitively?',
+  };
+
   @override
   Widget build(BuildContext context) {
     final scores = examState.sectionScores.values.toList();
@@ -29,6 +45,16 @@ class ExamScoreCard extends StatelessWidget {
         scores.fold<int>(0, (sum, s) => sum + s.redFlags.length);
     final total = totalHit + totalMissed;
     final overallPercent = total > 0 ? (totalHit / total * 100).round() : 0;
+
+    // Group scores by ABPMR domain
+    final domainGroups = <String, List<SectionScore>>{};
+    for (final score in scores) {
+      final domain = score.domain ?? _inferDomain(score.sectionTitle) ?? '?';
+      domainGroups.putIfAbsent(domain, () => []).add(score);
+    }
+    // Sort domains A-E
+    final sortedDomains = domainGroups.keys.toList()
+      ..sort((a, b) => a.compareTo(b));
 
     return Container(
       color: AppColors.bg,
@@ -102,21 +128,36 @@ class ExamScoreCard extends StatelessWidget {
                 // Timing feedback
                 TimingFeedbackCard(examState: examState),
 
-                // Per-section breakdown
+                // Domain-grouped breakdown
                 Text(
-                  'Section Breakdown',
+                  'ABPMR Domain Performance',
                   style: GoogleFonts.playfairDisplay(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                     color: AppColors.navy,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                Text(
+                  'Scored independently per official ABPMR Part II criteria',
+                  style: GoogleFonts.sourceSerif4(
+                    fontSize: 13,
+                    fontStyle: FontStyle.italic,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 20),
 
-                ...scores.map((score) => _SectionScoreCard(
-                      score: score,
-                      timing: examState.sectionTimings[score.sectionId],
-                    )),
+                ...sortedDomains.map((domain) {
+                  final domainScores = domainGroups[domain]!;
+                  return _DomainGroup(
+                    domain: domain,
+                    domainName: _domainNames[domain] ?? domain,
+                    abpmrQuestion: _abpmrQuestions[domain] ?? '',
+                    scores: domainScores,
+                    timings: examState.sectionTimings,
+                  );
+                }),
 
                 const SizedBox(height: 32),
                 Container(height: 1, color: AppColors.divider),
@@ -158,6 +199,156 @@ class ExamScoreCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  static String? _inferDomain(String title) {
+    final lower = title.toLowerCase();
+    if (lower.contains('domain b') || lower.contains('problem solving')) return 'B';
+    if (lower.contains('domain c') || lower.contains('patient management')) return 'C';
+    if (lower.contains('domain d') || lower.contains('systems')) return 'D';
+    if (lower.contains('domain e') || lower.contains('interpersonal')) return 'E';
+    if (lower.contains('history') || lower.contains('physical')) return 'A';
+    return null;
+  }
+}
+
+class _DomainGroup extends StatelessWidget {
+  final String domain;
+  final String domainName;
+  final String abpmrQuestion;
+  final List<SectionScore> scores;
+  final Map<String, SectionTiming> timings;
+
+  const _DomainGroup({
+    required this.domain,
+    required this.domainName,
+    required this.abpmrQuestion,
+    required this.scores,
+    required this.timings,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final domainHit = scores.fold<int>(0, (s, sc) => s + sc.conceptsHit.length);
+    final domainMissed = scores.fold<int>(0, (s, sc) => s + sc.conceptsMissed.length);
+    final domainTotal = domainHit + domainMissed;
+    final domainPercent = domainTotal > 0 ? domainHit / domainTotal : 0.0;
+    final percentInt = (domainPercent * 100).round();
+
+    final statusColor = domainPercent >= 0.7
+        ? AppColors.success
+        : (domainPercent >= 0.4 ? AppColors.warning : AppColors.danger);
+    final statusIcon = domainPercent >= 0.7
+        ? Icons.check_circle_outline
+        : (domainPercent >= 0.4 ? Icons.warning_amber_rounded : Icons.cancel_outlined);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Domain header
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+            decoration: BoxDecoration(
+              color: AppColors.navy.withValues(alpha: 0.03),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.navy,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'Domain $domain',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        domainName,
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.navy,
+                        ),
+                      ),
+                    ),
+                    Icon(statusIcon, size: 22, color: statusColor),
+                    const SizedBox(width: 6),
+                    Text(
+                      '$percentInt%',
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: statusColor,
+                      ),
+                    ),
+                  ],
+                ),
+                if (abpmrQuestion.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    abpmrQuestion,
+                    style: GoogleFonts.sourceSerif4(
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 10),
+                // Domain-level progress bar
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(3),
+                  child: LinearProgressIndicator(
+                    value: domainPercent,
+                    backgroundColor: AppColors.surfaceAlt,
+                    color: statusColor,
+                    minHeight: 5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Section cards within this domain
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+            child: Column(
+              children: scores.map((score) => _SectionScoreCard(
+                score: score,
+                timing: timings[score.sectionId],
+              )).toList(),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -229,18 +420,11 @@ class _SectionScoreCard extends StatelessWidget {
     final percent = score.percentCovered;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: AppColors.bg,
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,8 +436,8 @@ class _SectionScoreCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   score.sectionTitle,
-                  style: GoogleFonts.playfairDisplay(
-                    fontSize: 15,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: AppColors.navy,
                   ),
@@ -266,22 +450,18 @@ class _SectionScoreCard extends StatelessWidget {
                     Text(
                       _formatTime(timing!.elapsedSeconds),
                       style: GoogleFonts.jetBrainsMono(
-                        fontSize: 12,
+                        fontSize: 11,
                         color: AppColors.textMuted,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      width: 1,
-                      height: 12,
-                      color: AppColors.divider,
-                    ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
+                    Container(width: 1, height: 10, color: AppColors.divider),
+                    const SizedBox(width: 6),
                   ],
                   Text(
                     '${score.turnsTaken} turns',
                     style: GoogleFonts.dmSans(
-                      fontSize: 12,
+                      fontSize: 11,
                       color: AppColors.textMuted,
                     ),
                   ),
@@ -289,14 +469,14 @@ class _SectionScoreCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
           // Progress bar
           Row(
             children: [
               Expanded(
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(3),
                   child: LinearProgressIndicator(
                     value: percent,
                     backgroundColor: AppColors.surfaceAlt,
@@ -305,15 +485,15 @@ class _SectionScoreCard extends StatelessWidget {
                         : (percent >= 0.4
                             ? AppColors.warning
                             : AppColors.danger),
-                    minHeight: 6,
+                    minHeight: 4,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Text(
                 '${score.conceptsHit.length}/$total',
                 style: GoogleFonts.dmSans(
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: AppColors.text,
                 ),
@@ -323,36 +503,36 @@ class _SectionScoreCard extends StatelessWidget {
 
           // Missed concepts
           if (score.conceptsMissed.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               'Missed:',
               style: GoogleFonts.dmSans(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: AppColors.burgundy,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             ...score.conceptsMissed.map((c) => Padding(
-                  padding: const EdgeInsets.only(left: 8, bottom: 3),
+                  padding: const EdgeInsets.only(left: 6, bottom: 2),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        margin: const EdgeInsets.only(top: 6),
-                        width: 4,
-                        height: 4,
+                        margin: const EdgeInsets.only(top: 5),
+                        width: 3,
+                        height: 3,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: AppColors.burgundy.withValues(alpha: 0.5),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           c,
                           style: GoogleFonts.sourceSerif4(
-                            fontSize: 13,
+                            fontSize: 12,
                             color: AppColors.textMuted,
                           ),
                         ),
@@ -364,12 +544,12 @@ class _SectionScoreCard extends StatelessWidget {
 
           // Red flags
           if (score.redFlags.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: AppColors.danger.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(4),
                 border: Border.all(
                     color: AppColors.danger.withValues(alpha: 0.2)),
               ),
@@ -379,25 +559,25 @@ class _SectionScoreCard extends StatelessWidget {
                   Row(
                     children: [
                       const Icon(Icons.warning_amber,
-                          size: 14, color: AppColors.danger),
-                      const SizedBox(width: 6),
+                          size: 12, color: AppColors.danger),
+                      const SizedBox(width: 4),
                       Text(
                         'Safety Concerns',
                         style: GoogleFonts.dmSans(
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: AppColors.danger,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   ...score.redFlags.map((f) => Padding(
                         padding: const EdgeInsets.only(bottom: 2),
                         child: Text(
                           '• $f',
                           style: GoogleFonts.sourceSerif4(
-                            fontSize: 13,
+                            fontSize: 12,
                             color: AppColors.danger,
                           ),
                         ),

@@ -74,6 +74,7 @@ class SectionScore {
   final List<String> conceptsMissed;
   final List<String> redFlags;
   final int turnsTaken;
+  final String? domain; // ABPMR domain: 'A', 'B', 'C', 'D', 'E'
 
   const SectionScore({
     required this.sectionId,
@@ -82,6 +83,7 @@ class SectionScore {
     this.conceptsMissed = const [],
     this.redFlags = const [],
     this.turnsTaken = 0,
+    this.domain,
   });
 
   double get percentCovered {
@@ -96,12 +98,14 @@ class ExamSection {
   final String title;
   final String prompt; // The question the examiner asks
   final String modelAnswer; // Hidden rubric for concept tracking
+  final String? domain; // ABPMR domain: 'A', 'B', 'C', 'D', 'E'
 
   const ExamSection({
     required this.id,
     required this.title,
     required this.prompt,
     required this.modelAnswer,
+    this.domain,
   });
 }
 
