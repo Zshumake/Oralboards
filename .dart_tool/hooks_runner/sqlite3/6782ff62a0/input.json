@@ -1,0 +1,12 @@
+{
+  "assets": {},
+  "config": {
+    "build_asset_types": [],
+    "linking_enabled": true
+  },
+  "out_dir_shared": "/Users/zacharyshumaker/Desktop/MY INVENTIONS/Oral boards/.dart_tool/hooks_runner/shared/sqlite3/build/",
+  "out_file": "/Users/zacharyshumaker/Desktop/MY INVENTIONS/Oral boards/.dart_tool/hooks_runner/sqlite3/6782ff62a0/output.json",
+  "package_name": "sqlite3",
+  "package_root": "/Users/zacharyshumaker/.pub-cache/hosted/pub.dev/sqlite3-3.2.0/",
+  "user_defines": {}
+}
