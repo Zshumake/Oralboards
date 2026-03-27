@@ -1,55 +1,18 @@
 import '../../models/case_model.dart';
-import 'agitation.dart';
-import 'amputee_care.dart';
-import 'armswelling.dart';
-import 'bilateralshoulderpain.dart';
-import 'bilateralshoulderpain2.dart';
-import 'burninghandpain.dart';
-import 'calfdiscomfort.dart';
-import 'chestpain.dart';
-import 'difficultywalking.dart';
-import 'disorderofconsciousness.dart';
-import 'footdrop.dart';
-import 'handclumsiness.dart';
-import 'headache.dart';
-import 'headaches.dart';
-import 'leftanklepain.dart';
-import 'lefthandpain.dart';
-import 'leftlowerextremitypain.dart';
-import 'leftshoulderpain.dart';
-import 'legpain.dart';
-import 'lethargy.dart';
-import 'lowbackpain1.dart';
-import 'lowbackpain2.dart';
-import 'morningstiffness.dart';
-import 'neckpain.dart';
-import 'poststroke_shoulder_pain.dart';
-import 'progressiveweakness.dart';
-import 'rightelbowpain.dart';
-import 'rightfootdrop.dart';
-import 'righthandnumbness.dart';
-import 'rightkneepain.dart';
-import 'shortnessofbreath.dart';
-import 'tachycardia.dart';
-import 'toewalking.dart';
-import 'urinaryincontinence.dart';
-import 'weaknessinachild.dart';
-import 'workaccident.dart';
-import 'stroke_depression_pba.dart';
-import 'stroke_dysphagia.dart';
-import 'stroke_ich_spasticity.dart';
 import 'stroke_mca_right_hemiplegia.dart';
+import 'stroke_ich_spasticity.dart';
+import 'stroke_dysphagia.dart';
 import 'stroke_neglect.dart';
-import 'stroke_shoulder_subluxation.dart';
+import 'stroke_depression_pba.dart';
 import 'stroke_wallenberg.dart';
+import 'stroke_shoulder_subluxation.dart';
 import 'stroke_young_adult_pfo.dart';
-import 'sci_brown_sequard.dart';
-import 'sci_heterotopic_ossification.dart';
-import 'sci_high_cervical_vent.dart';
-import 'sci_neurogenic_bowel.dart';
-import 'sci_pressure_injury.dart';
 import 'sci_t6_complete.dart';
-import 'wristdrop.dart';
+import 'sci_neurogenic_bowel.dart';
+import 'sci_heterotopic_ossification.dart';
+import 'sci_pressure_injury.dart';
+import 'sci_brown_sequard.dart';
+import 'sci_high_cervical_vent.dart';
 import 'tbi_moderate_return_work.dart';
 import 'tbi_concussion_return_play.dart';
 import 'tbi_pituitary_dysfunction.dart';
@@ -88,88 +51,64 @@ import 'special_itb_pump.dart';
 import 'special_dysvascular_amputation.dart';
 
 const List<CaseModel> allCases = [
-  caseAgitation,
-  caseAmputeeCare,
-  caseArmswelling,
-  caseBilateralshoulderpain,
-  caseBilateralshoulderpain2,
-  caseCalfdiscomfort,
-  caseDifficultywalking,
-  caseDisorderofconsciousness,
-  caseFootdrop,
-  caseHeadache,
-  caseHeadaches,
-  caseLeftanklepain,
-  caseLefthandpain,
-  caseLeftlowerextremitypain,
-  caseLeftshoulderpain,
-  caseLegpain,
-  caseLethargy,
-  caseLowbackpain1,
-  caseLowbackpain2,
-  caseNeckpain,
-  casePoststrokeShoulderPain,
-  caseProgressiveweakness,
-  caseRightelbowpain,
-  caseRightfootdrop,
-  caseRighthandnumbness,
-  caseRightkneepain,
-  caseShortnessofbreath,
-  caseTachycardia,
-  caseUrinaryincontinence,
-  caseWeaknessinachild,
-  caseWristdrop,
-  caseChestpain,
-  caseToewalking,
-  caseHandclumsiness,
-  caseBurninghandpain,
-  caseMorningstiffness,
-  caseWorkaccident,
-  caseStrokeDepressionPba,
-  caseStrokeWallenberg,
-  caseStrokeShoulderSubluxation,
-  caseStrokeYoungAdultPfo,
+  // Stroke (8)
   caseStrokeMcaRightHemiplegia,
   caseStrokeIchSpasticity,
   caseStrokeDysphagia,
   caseStrokeNeglect,
+  caseStrokeDepressionPba,
+  caseStrokeWallenberg,
+  caseStrokeShoulderSubluxation,
+  caseStrokeYoungAdultPfo,
+  // Spinal Cord Injury (6)
   caseSciT6Complete,
   caseSciNeurogenicBowel,
   caseSciHeterotopicOssification,
   caseSciPressureInjury,
   caseSciBrownSequard,
   caseSciHighCervicalVent,
+  // TBI (3)
   caseTbiModerateReturnWork,
   caseTbiConcussionReturnPlay,
   caseTbiPituitaryDysfunction,
+  // Geriatric (4)
   caseGeriatricHipFracture,
   caseGeriatricDeconditioning,
   caseGeriatricTkaRehab,
   caseGeriatricPolypharmacy,
+  // Neurodegenerative (3)
   caseNeuroMsRelapsing,
   caseNeuroParkinsons,
   caseNeuroPostPolio,
+  // MSK/Sports (5)
   caseMskFrozenShoulder,
   caseMskRotatorCuff,
   caseMskAclRehab,
   caseMskCervicalRadiculopathy,
   caseMskMyofascialPain,
+  // Pain (3)
   casePainChronicLowBack,
   casePainFibromyalgia,
   casePainPhantomLimb,
+  // Pediatric (3)
   casePedsBrachialPlexus,
   casePedsTetheredCord,
   casePedsJia,
+  // Cardiac/Pulmonary (3)
   caseCardiopulmCopdRehab,
   caseCardiopulmCardiacRehab,
   caseCardiopulmPostCovid,
+  // Cancer (2)
   caseCancerCipn,
   caseCancerSpinalCordCompression,
+  // Burn/Trauma (2)
   caseBurnMajorRehab,
   casePolytraumaBlastInjury,
+  // Neuromuscular (3)
   caseNmMyastheniaGravis,
   caseNmCmt,
   caseNmCubitalTunnel,
+  // Special Topics (5)
   caseSpecialWheelchairSeating,
   caseSpecialIme,
   caseSpecialOpioidTaper,
