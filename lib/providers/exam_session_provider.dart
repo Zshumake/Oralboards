@@ -151,6 +151,15 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
     // Remove concepts that were eventually hit from remaining
     allConceptsRemaining.removeAll(allConceptsHit);
 
+    // Extract teaching point from the last examiner message with shouldAdvance
+    var teachingPoint = '';
+    for (final msg in messages.reversed) {
+      if (msg.metadata != null && msg.metadata!.teachingPoint.isNotEmpty) {
+        teachingPoint = msg.metadata!.teachingPoint;
+        break;
+      }
+    }
+
     final score = SectionScore(
       sectionId: section.id,
       sectionTitle: section.title,
@@ -159,6 +168,7 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
       redFlags: allRedFlags.toList(),
       turnsTaken: turnCount,
       domain: section.domain,
+      teachingPoint: teachingPoint,
     );
 
     final scores = Map<String, SectionScore>.from(state.sectionScores);

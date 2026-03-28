@@ -25,6 +25,7 @@ class ExaminerTurnResult {
   final bool shouldAdvance;
   final List<String> redFlags;
   final String probeType;
+  final String teachingPoint;
 
   const ExaminerTurnResult({
     required this.examinerResponse,
@@ -33,6 +34,7 @@ class ExaminerTurnResult {
     this.shouldAdvance = false,
     this.redFlags = const [],
     this.probeType = 'generic',
+    this.teachingPoint = '',
   });
 
   static ExaminerTurnResult? tryParse(String jsonString) {
@@ -60,6 +62,7 @@ class ExaminerTurnResult {
                 .toList() ??
             [],
         probeType: data['probe_type'] as String? ?? 'generic',
+        teachingPoint: data['teaching_point'] as String? ?? '',
       );
     } catch (_) {
       return null;
@@ -75,6 +78,7 @@ class SectionScore {
   final List<String> redFlags;
   final int turnsTaken;
   final String? domain; // ABPMR domain: 'A', 'B', 'C', 'D', 'E'
+  final String teachingPoint;
 
   const SectionScore({
     required this.sectionId,
@@ -84,6 +88,7 @@ class SectionScore {
     this.redFlags = const [],
     this.turnsTaken = 0,
     this.domain,
+    this.teachingPoint = '',
   });
 
   double get percentCovered {

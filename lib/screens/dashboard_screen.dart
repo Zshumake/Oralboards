@@ -133,6 +133,10 @@ class DashboardScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 32),
 
+        // Board Readiness Predictor
+        _BoardReadinessCard(analysis: analysis),
+        const SizedBox(height: 32),
+
         // Domain Performance
         Text(
           'Domain Performance',
@@ -352,6 +356,194 @@ class _SummaryCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _BoardReadinessCard extends StatelessWidget {
+  final dynamic analysis;
+
+  const _BoardReadinessCard({required this.analysis});
+
+  @override
+  Widget build(BuildContext context) {
+    final domains = analysis.domainSummaries as Map<String, dynamic>;
+    final totalExams = analysis.totalExams as int;
+    final avgScore = analysis.averageScore as double;
+
+    // Determine readiness per domain
+    final domainReadiness = <String, double>{};
+    const domainLabels = {
+      'A': 'Data Acquisition',
+      'B': 'Problem Solving',
+      'C': 'Patient Management',
+      'D': 'Systems-Based Practice',
+      'E': 'Interpersonal Skills',
+    };
+
+    for (final d in ['A', 'B', 'C', 'D', 'E']) {
+      final summary = domains[d];
+      domainReadiness[d] = summary != null ? (summary.hitRate * 100) : 0.0;
+    }
+
+    // Overall readiness signal
+    final allAbove70 = domainReadiness.values.every((v) => v >= 70);
+    final allAbove50 = domainReadiness.values.every((v) => v >= 50);
+    final weakestDomain = domainReadiness.entries
+        .reduce((a, b) => a.value < b.value ? a : b);
+
+    String readinessLabel;
+    Color readinessColor;
+    IconData readinessIcon;
+    String readinessDetail;
+
+    if (totalExams < 5) {
+      readinessLabel = 'Insufficient Data';
+      readinessColor = AppColors.textMuted;
+      readinessIcon = Icons.hourglass_empty;
+      readinessDetail =
+          'Complete at least 5 practice exams to generate a readiness estimate. You have completed $totalExams so far.';
+    } else if (allAbove70 && avgScore >= 70) {
+      readinessLabel = 'Likely Ready';
+      readinessColor = AppColors.success;
+      readinessIcon = Icons.check_circle;
+      readinessDetail =
+          'Your performance across all 5 ABPMR domains exceeds 70%, which is consistent with the published Part II pass rate threshold. Continue practicing to maintain readiness.';
+    } else if (allAbove50) {
+      readinessLabel = 'Almost Ready';
+      readinessColor = AppColors.warning;
+      readinessIcon = Icons.trending_up;
+      readinessDetail =
+          'Most domains are above 50%, but ${domainLabels[weakestDomain.key]} (${weakestDomain.value.round()}%) needs improvement. Focus your study on this area.';
+    } else {
+      readinessLabel = 'Needs More Preparation';
+      readinessColor = AppColors.danger;
+      readinessIcon = Icons.schedule;
+      readinessDetail =
+          '${domainLabels[weakestDomain.key]} is at ${weakestDomain.value.round()}%. The ABPMR Part II pass rate is approximately 75-80%. Target consistent scores above 70% in all domains.';
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: readinessColor.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: readinessColor.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(readinessIcon, color: readinessColor, size: 24),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Board Readiness',
+                  style: GoogleFonts.playfairDisplay(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.navy,
+                  ),
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: readinessColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  readinessLabel,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: readinessColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            readinessDetail,
+            style: GoogleFonts.sourceSerif4(
+              fontSize: 13,
+              color: AppColors.text,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Per-domain readiness bars
+          ...['A', 'B', 'C', 'D', 'E'].map((d) {
+            final pct = domainReadiness[d] ?? 0;
+            final barColor = pct >= 70
+                ? AppColors.success
+                : (pct >= 50 ? AppColors.warning : AppColors.danger);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 140,
+                    child: Text(
+                      '${domainLabels[d]}',
+                      style: GoogleFonts.dmSans(
+                        fontSize: 12,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(3),
+                      child: LinearProgressIndicator(
+                        value: pct / 100,
+                        backgroundColor: AppColors.surfaceAlt,
+                        color: barColor,
+                        minHeight: 6,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 36,
+                    child: Text(
+                      '${pct.round()}%',
+                      textAlign: TextAlign.right,
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: barColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+
+          const SizedBox(height: 8),
+          Container(height: 1, color: AppColors.divider),
+          const SizedBox(height: 8),
+          Text(
+            'Based on ${totalExams} practice exams. This reflects your practice performance, not a validated prediction of board outcomes.',
+            style: GoogleFonts.dmSans(
+              fontSize: 11,
+              fontStyle: FontStyle.italic,
+              color: AppColors.textLight,
+            ),
+          ),
+        ],
       ),
     );
   }

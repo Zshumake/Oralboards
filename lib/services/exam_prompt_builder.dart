@@ -65,7 +65,8 @@ RESPONSE FORMAT — you MUST respond with valid JSON matching this exact schema:
   "concepts_remaining": ["concepts from the model answer NOT yet addressed"],
   "should_advance": false,
   "red_flags": ["any clinically dangerous errors or safety violations the candidate stated"],
-  "probe_type": "one of: depth, safety, prioritization, specificity, differential, follow_through, evidence, generic, opening, advancement"
+  "probe_type": "one of: depth, safety, prioritization, specificity, differential, follow_through, evidence, generic, opening, advancement",
+  "teaching_point": "When should_advance is true, provide a 1-2 sentence high-yield teaching pearl explaining the most important concept the examiner was testing in this section and why it matters clinically. When should_advance is false, leave this as an empty string."
 }
 ''';
 }

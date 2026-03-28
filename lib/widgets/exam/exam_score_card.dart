@@ -586,6 +586,52 @@ class _SectionScoreCard extends StatelessWidget {
               ),
             ),
           ],
+
+          // Teaching moment
+          if (score.teachingPoint.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.navy.withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(4),
+                border: Border(
+                  left: BorderSide(
+                    color: AppColors.navy.withValues(alpha: 0.3),
+                    width: 3,
+                  ),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.lightbulb_outline,
+                          size: 12, color: AppColors.navy),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Teaching Point',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.navy,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    score.teachingPoint,
+                    style: GoogleFonts.sourceSerif4(
+                      fontSize: 12,
+                      color: AppColors.text,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

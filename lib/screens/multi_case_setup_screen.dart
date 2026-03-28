@@ -6,6 +6,7 @@ import '../data/cases/all_cases.dart';
 import '../models/case_model.dart';
 import '../providers/exam_settings_provider.dart';
 import '../providers/multi_case_provider.dart';
+import '../providers/recommendations_provider.dart';
 import '../theme/app_theme.dart';
 import 'exam_screen.dart';
 
@@ -168,6 +169,27 @@ class _MultiCaseSetupScreenState extends ConsumerState<MultiCaseSetupScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.burgundy,
                     foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    minimumSize: const Size(double.infinity, 0),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Adaptive prep button
+                OutlinedButton.icon(
+                  onPressed: () {
+                    final queue = ref.read(adaptiveQueueProvider(_presetCount));
+                    _startSession(queue);
+                  },
+                  icon: const Icon(Icons.auto_fix_high, size: 16),
+                  label: Text(
+                    'Adaptive Prep — Target Weak Areas',
+                    style: GoogleFonts.dmSans(fontWeight: FontWeight.w600),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.navy,
+                    side: const BorderSide(color: AppColors.navy),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     minimumSize: const Size(double.infinity, 0),
                   ),
