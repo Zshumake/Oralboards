@@ -7,6 +7,7 @@ import '../widgets/benchmark_section.dart';
 import '../widgets/charts/domain_bar_chart.dart';
 import '../widgets/charts/score_trend_chart.dart';
 import '../widgets/export_report_button.dart';
+import '../widgets/topic_coverage_map.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -39,37 +40,70 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.insights,
-              size: 48, color: AppColors.textMuted.withValues(alpha: 0.4)),
-          const SizedBox(height: 16),
-          Text(
-            'No Data Yet',
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textMuted,
+    return ListView(
+      padding: const EdgeInsets.all(32),
+      children: [
+        Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back, size: 20),
+              onPressed: () => Navigator.pop(context),
+              color: AppColors.navy,
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Complete some exam simulations to see your analytics.',
-            style: GoogleFonts.sourceSerif4(
-              fontSize: 14,
-              fontStyle: FontStyle.italic,
-              color: AppColors.textMuted,
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Performance Analysis',
+                style: GoogleFonts.playfairDisplay(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.navy,
+                ),
+              ),
             ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(height: 1, color: AppColors.divider),
+        const SizedBox(height: 24),
+
+        // Coverage map is useful even before any exams
+        const TopicCoverageMap(),
+        const SizedBox(height: 32),
+
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(10),
           ),
-          const SizedBox(height: 24),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Go Back', style: GoogleFonts.dmSans()),
+          child: Column(
+            children: [
+              Icon(Icons.insights,
+                  size: 40, color: AppColors.textMuted.withValues(alpha: 0.4)),
+              const SizedBox(height: 12),
+              Text(
+                'No Exam Data Yet',
+                style: GoogleFonts.playfairDisplay(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textMuted,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Complete exam simulations to unlock domain analytics, score trends, and board readiness predictions.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.sourceSerif4(
+                  fontSize: 13,
+                  fontStyle: FontStyle.italic,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -131,6 +165,10 @@ class DashboardScreen extends ConsumerWidget {
             ),
           ],
         ),
+        const SizedBox(height: 32),
+
+        // Topic Coverage Map
+        const TopicCoverageMap(),
         const SizedBox(height: 32),
 
         // Board Readiness Predictor
