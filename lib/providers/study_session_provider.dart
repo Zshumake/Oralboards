@@ -81,12 +81,14 @@ class StudySessionNotifier extends StateNotifier<StudySessionState> {
         i++; // skip the answer section
       } else {
         final isQuestionHeader = current.title.trim().startsWith('+');
-        final isHistoryOrExam = titleLower.contains('relevant history') ||
-            titleLower.contains('relevant physical');
+        final isHistoryOrExam = titleLower.contains('history') ||
+            titleLower.contains('physical exam');
+        final isDomainHeader = titleLower.startsWith('domain ');
         final isDiagnosis = titleLower.contains('diagnosis');
         final shouldRecord = isQuestionHeader ||
             isHistoryOrExam ||
             isDiagnosis ||
+            isDomainHeader ||
             titleLower.contains('challenge answer') ||
             titleLower.contains('challenge question');
 
