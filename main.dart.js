@@ -106291,22 +106291,23 @@ a2k(a){return this.Nl(a,null,null)},
 a2s(a){return this.Nl(null,a,null)},
 aAm(a){return this.Nl(null,null,a)}}
 A.pb.prototype={
-asR(a){var s,r,q,p,o,n,m,l,k,j,i,h,g,f="challenge answer",e=A.b([],t.dK),d=a.d
-for(s=0;r=d.length,s<r;++s){q=d[s]
+asR(a){var s,r,q,p,o,n,m,l,k,j,i,h,g,f,e="challenge answer",d=A.b([],t.dK),c=a.d
+for(s=0;r=c.length,s<r;++s){q=c[s]
 p=s+1
-o=p<r?d[p]:null
+o=p<r?c[p]:null
 r=q.a
 n=r.toLowerCase()
 if(B.n.n(n,"chief complaint")||B.n.n(n,"presentation"))continue
 m=B.n.n(n,"challenge question")
-l=o==null?null:B.n.n(o.a.toLowerCase(),f)
+l=o==null?null:B.n.n(o.a.toLowerCase(),e)
 k=l===!0
-if(m&&k){e.push(new A.pa(""+s+"-merged",r,q.b,o.b,!0))
+if(m&&k){d.push(new A.pa(""+s+"-merged",r,q.b,o.b,!0))
 s=p}else{j=B.n.aT(B.n.cF(r),"+")
-i=B.n.n(n,"relevant history")||B.n.n(n,"relevant physical")
-h=B.n.n(n,"diagnosis")
-g=j||i||h||B.n.n(n,f)||m
-e.push(new A.pa(""+s+"-standard",r,null,q.b,g))}}return e},
+i=B.n.n(n,"history")||B.n.n(n,"physical exam")
+h=B.n.aT(n,"domain ")
+g=B.n.n(n,"diagnosis")
+f=j||i||g||h||B.n.n(n,e)||m
+d.push(new A.pa(""+s+"-standard",r,null,q.b,f))}}return d},
 aFW(a){var s,r=this,q=B.l.a4F(r.f.b,new A.azQ(a))
 if(q!==-1&&q<r.f.b.length-1){s=r.f
 r.sb1(s.a2k(A.cx([s.b[q+1].a],t.N)))}}}
