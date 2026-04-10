@@ -11,7 +11,7 @@ class ScoreTrendChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (trend.length < 2) {
-      return const SizedBox(
+      return SizedBox(
         height: 120,
         child: Center(
           child: Text(

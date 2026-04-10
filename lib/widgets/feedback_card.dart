@@ -138,7 +138,7 @@ class FeedbackCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.warning_amber, size: 16,
+                    Icon(Icons.warning_amber, size: 16,
                         color: AppColors.danger),
                     const SizedBox(width: 8),
                     Text('Critical Safety Issues',
@@ -159,7 +159,7 @@ class FeedbackCard extends StatelessWidget {
                             margin: const EdgeInsets.only(top: 7),
                             width: 4,
                             height: 4,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: AppColors.danger,
                             ),
@@ -193,7 +193,7 @@ class FeedbackCard extends StatelessWidget {
         if (fb.content.missedConcepts.isEmpty)
           Row(
             children: [
-              const Icon(Icons.check_circle, size: 16,
+              Icon(Icons.check_circle, size: 16,
                   color: AppColors.success),
               const SizedBox(width: 8),
               Text('Great job! You covered the key points.',
@@ -297,7 +297,7 @@ class FeedbackCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(8),
-            border: const Border(
+            border: Border(
               left: BorderSide(color: AppColors.burgundy, width: 3),
             ),
             boxShadow: [

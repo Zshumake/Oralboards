@@ -247,7 +247,7 @@ class SectionAccordion extends ConsumerWidget {
                                               mainAxisSize:
                                                   MainAxisSize.min,
                                               children: [
-                                                const Icon(
+                                                Icon(
                                                   Icons.visibility_outlined,
                                                   size: 18,
                                                   color: AppColors.navy,

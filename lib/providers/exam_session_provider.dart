@@ -7,6 +7,7 @@ import '../services/exam_prompt_builder.dart';
 import '../services/gemini_service.dart' as gemini;
 import 'achievement_provider.dart';
 import 'history_provider.dart';
+import 'persona_provider.dart';
 import 'review_provider.dart';
 import 'settings_provider.dart';
 import 'timer_provider.dart';
@@ -41,6 +42,14 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
 
   /// Start the exam by sending the first examiner message.
   Future<void> startExam() async {
+    // Apply the selected persona's voice settings to TTS
+    final persona = ref.read(selectedPersonaProvider).valueOrNull;
+    if (persona != null) {
+      final ttsService = ref.read(ttsServiceProvider);
+      await ttsService.init();
+      await ttsService.applyPersona(persona);
+    }
+
     state = state.copyWith(phase: ExamPhase.inProgress);
     await _sendExaminerOpening();
   }
@@ -62,10 +71,12 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
 
     // Call Gemini
     final apiKey = ref.read(apiKeyProvider).valueOrNull ?? '';
+    final persona = ref.read(selectedPersonaProvider).valueOrNull;
     final systemPrompt = buildExamSystemPrompt(
       casePresentation: state.casePresentation,
       section: section,
       conceptsHitSoFar: state.cumulativeConceptsHit,
+      personaModifier: persona?.promptModifier ?? '',
     );
     final contents = _buildContentsArray(section.id);
 
@@ -406,10 +417,12 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
     state = state.copyWith(isWaitingForAi: true, sectionTimings: timings);
 
     final apiKey = ref.read(apiKeyProvider).valueOrNull ?? '';
+    final openingPersona = ref.read(selectedPersonaProvider).valueOrNull;
     final systemPrompt = buildExamSystemPrompt(
       casePresentation: state.casePresentation,
       section: section,
       conceptsHitSoFar: [],
+      personaModifier: openingPersona?.promptModifier ?? '',
     );
 
     // Send empty user message to trigger the examiner's opening

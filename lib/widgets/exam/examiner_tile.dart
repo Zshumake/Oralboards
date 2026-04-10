@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../models/examiner_persona.dart';
 import '../../providers/exam_session_provider.dart';
+import '../../providers/persona_provider.dart';
 import 'animated_avatar.dart';
 import 'avatar_state.dart';
 
@@ -11,6 +13,8 @@ class ExaminerTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final examState = ref.watch(examSessionProvider);
+    final persona = ref.watch(selectedPersonaProvider).valueOrNull ??
+        ExaminerPersona.chen;
     final avatarSt = deriveAvatarState(examState);
     final isSpeaking =
         examState.isTtsSpeaking || examState.isExaminerActive;
@@ -28,7 +32,7 @@ class ExaminerTile extends ConsumerWidget {
     }
 
     return Semantics(
-      label: 'Examiner Dr. Examiner, currently $statusText',
+      label: 'Examiner ${persona.name}, currently $statusText',
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         decoration: BoxDecoration(
@@ -37,7 +41,7 @@ class ExaminerTile extends ConsumerWidget {
           border: Border.all(
             color: isSpeaking
                 ? const Color(0xFF00C853).withValues(alpha: 0.8)
-                : Colors.transparent,
+                : persona.iconColor.withValues(alpha: 0.3),
             width: 2,
           ),
           boxShadow: isSpeaking
@@ -64,7 +68,7 @@ class ExaminerTile extends ConsumerWidget {
             const SizedBox(height: 8),
             // Name
             Text(
-              'Dr. Examiner',
+              persona.name,
               style: GoogleFonts.dmSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,

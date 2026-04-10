@@ -8,6 +8,7 @@ import '../models/multi_case_session.dart';
 import '../providers/exam_session_provider.dart';
 import '../providers/exam_settings_provider.dart';
 import '../providers/multi_case_provider.dart';
+import '../providers/persona_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/timer_provider.dart';
 import '../theme/app_theme.dart';
@@ -130,6 +131,13 @@ class _ExamScreenState extends ConsumerState<ExamScreen>
       }
     }
 
+    // Randomize persona if the setting is enabled
+    final shouldRandomize =
+        ref.read(randomizePersonaProvider).valueOrNull ?? false;
+    if (shouldRandomize) {
+      await ref.read(selectedPersonaProvider.notifier).randomize();
+    }
+
     // Start timer — countdown or count-up based on settings
     final examSettings =
         ref.read(examSettingsProvider).valueOrNull ?? const ExamSettings();
@@ -233,7 +241,7 @@ class _ExamScreenState extends ConsumerState<ExamScreen>
             );
           }
         });
-        return const Scaffold(
+        return Scaffold(
           body: Center(
             child: CircularProgressIndicator(color: AppColors.navy),
           ),
@@ -375,7 +383,7 @@ class _ExamScreenState extends ConsumerState<ExamScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(
+          SizedBox(
             width: 32,
             height: 32,
             child: CircularProgressIndicator(

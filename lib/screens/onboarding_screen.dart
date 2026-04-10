@@ -334,7 +334,7 @@ class _ExamDatePageState extends ConsumerState<_ExamDatePage>
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
+            colorScheme: ColorScheme.light(
               primary: AppColors.navy,
               onPrimary: Colors.white,
               secondary: AppColors.burgundy,

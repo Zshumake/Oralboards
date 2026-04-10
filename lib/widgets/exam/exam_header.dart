@@ -58,7 +58,7 @@ class ExamHeader extends ConsumerWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.arrow_back, size: 16, color: AppColors.navy),
+                      Icon(Icons.arrow_back, size: 16, color: AppColors.navy),
                       const SizedBox(width: 6),
                       Text(
                         'Exit',

@@ -95,7 +95,7 @@ class RecommendationCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 4),
-                const Icon(Icons.arrow_forward,
+                Icon(Icons.arrow_forward,
                     size: 14, color: AppColors.burgundy),
               ],
             ),

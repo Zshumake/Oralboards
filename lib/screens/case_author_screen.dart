@@ -214,7 +214,7 @@ class _CaseAuthorScreenState extends ConsumerState<CaseAuthorScreen> {
                         ),
                       ),
                       PopupMenuButton<String>(
-                        icon: const Icon(Icons.more_vert,
+                        icon: Icon(Icons.more_vert,
                             color: AppColors.navy, size: 20),
                         onSelected: (value) {
                           if (value == 'export') _exportJson();

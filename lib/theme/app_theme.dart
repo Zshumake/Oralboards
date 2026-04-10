@@ -2,37 +2,39 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
+  static bool isDark = false;
+
   // Backgrounds
-  static const bg = Color(0xFFFAF7F2); // warm cream
-  static const surface = Color(0xFFFFFFFF); // clean white
-  static const surfaceAlt = Color(0xFFF5F0E8); // darker cream
-  static const bgSecondary = Color(0xFFF0EBE3); // warm tan
+  static Color get bg => isDark ? const Color(0xFF1A1A2E) : const Color(0xFFFAF7F2);
+  static Color get surface => isDark ? const Color(0xFF242438) : const Color(0xFFFFFFFF);
+  static Color get surfaceAlt => isDark ? const Color(0xFF2E2E45) : const Color(0xFFF5F0E8);
+  static Color get bgSecondary => isDark ? const Color(0xFF2E2E45) : const Color(0xFFF0EBE3);
 
   // Primary palette
-  static const navy = Color(0xFF1B3A5C); // primary — headings, buttons
-  static const navyLight = Color(0xFF2A5580); // hover state
-  static const burgundy = Color(0xFF8B2635); // accent — highlights
-  static const burgundyLight = Color(0xFFA83242); // hover state
+  static Color get navy => isDark ? const Color(0xFF7EB5E0) : const Color(0xFF1B3A5C);
+  static Color get navyLight => isDark ? const Color(0xFF9AC8EB) : const Color(0xFF2A5580);
+  static Color get burgundy => isDark ? const Color(0xFFE0677A) : const Color(0xFF8B2635);
+  static Color get burgundyLight => isDark ? const Color(0xFFEB8594) : const Color(0xFFA83242);
 
   // Semantic
-  static const success = Color(0xFF2D6A4F); // forest green
-  static const warning = Color(0xFFB8860B); // dark goldenrod
-  static const danger = Color(0xFF9B2C2C); // deep red
+  static Color get success => isDark ? const Color(0xFF4ADE80) : const Color(0xFF2D6A4F);
+  static Color get warning => isDark ? const Color(0xFFFBBF24) : const Color(0xFFB8860B);
+  static Color get danger => isDark ? const Color(0xFFF87171) : const Color(0xFF9B2C2C);
 
   // Text
-  static const text = Color(0xFF2C2C2C); // near-black body
-  static const textMuted = Color(0xFF6B7280); // warm gray
-  static const textLight = Color(0xFF9CA3AF); // lighter gray
+  static Color get text => isDark ? const Color(0xFFE8E2D9) : const Color(0xFF2C2C2C);
+  static Color get textMuted => isDark ? const Color(0xFF9A9AAF) : const Color(0xFF6B7280);
+  static Color get textLight => isDark ? const Color(0xFF6B6B80) : const Color(0xFF9CA3AF);
 
   // Borders & dividers
-  static const border = Color(0xFFE5DFD5); // warm light border
-  static const divider = Color(0xFFD4CCC0); // slightly stronger
+  static Color get border => isDark ? const Color(0xFF3A3A50) : const Color(0xFFE5DFD5);
+  static Color get divider => isDark ? const Color(0xFF3A3A50) : const Color(0xFFD4CCC0);
 
   // Legacy aliases (for gradual migration of widgets)
-  static const primary = navy;
-  static const primaryHover = navyLight;
-  static const accent = burgundy;
-  static const surfaceHover = surfaceAlt;
+  static Color get primary => navy;
+  static Color get primaryHover => navyLight;
+  static Color get accent => burgundy;
+  static Color get surfaceHover => surfaceAlt;
 
   // High contrast overrides (WCAG AA+)
   static const hcBg = Color(0xFFFFFFFF);
@@ -68,7 +70,7 @@ ThemeData buildHighContrastTheme() {
 }
 
 ThemeData buildAppTheme() {
-  final base = ThemeData.light();
+  final base = AppColors.isDark ? ThemeData.dark() : ThemeData.light();
 
   // Heading font — elegant editorial serif
   final headingStyle = GoogleFonts.playfairDisplay(
@@ -104,21 +106,34 @@ ThemeData buildAppTheme() {
     labelSmall: uiStyle.copyWith(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textMuted),
   );
 
+  final onNavy = AppColors.isDark ? const Color(0xFF1A1A2E) : Colors.white;
+
   return base.copyWith(
     scaffoldBackgroundColor: AppColors.bg,
     cardColor: AppColors.surface,
     dividerColor: AppColors.divider,
     textTheme: textTheme,
-    colorScheme: const ColorScheme.light(
-      primary: AppColors.navy,
-      secondary: AppColors.burgundy,
-      surface: AppColors.surface,
-      error: AppColors.danger,
-      onPrimary: Colors.white,
-      onSecondary: Colors.white,
-      onSurface: AppColors.text,
-      onError: Colors.white,
-    ),
+    colorScheme: AppColors.isDark
+        ? ColorScheme.dark(
+            primary: AppColors.navy,
+            secondary: AppColors.burgundy,
+            surface: AppColors.surface,
+            error: AppColors.danger,
+            onPrimary: const Color(0xFF1A1A2E),
+            onSecondary: const Color(0xFF1A1A2E),
+            onSurface: AppColors.text,
+            onError: const Color(0xFF1A1A2E),
+          )
+        : ColorScheme.light(
+            primary: AppColors.navy,
+            secondary: AppColors.burgundy,
+            surface: AppColors.surface,
+            error: AppColors.danger,
+            onPrimary: Colors.white,
+            onSecondary: Colors.white,
+            onSurface: AppColors.text,
+            onError: Colors.white,
+          ),
     appBarTheme: AppBarTheme(
       backgroundColor: AppColors.bg,
       elevation: 0,
@@ -128,17 +143,17 @@ ThemeData buildAppTheme() {
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.navy,
-        foregroundColor: Colors.white,
+        foregroundColor: onNavy,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         elevation: 0,
-        textStyle: uiStyle.copyWith(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.white),
+        textStyle: uiStyle.copyWith(fontWeight: FontWeight.w600, fontSize: 14, color: onNavy),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.navy,
-        side: const BorderSide(color: AppColors.navy, width: 1.5),
+        side: BorderSide(color: AppColors.navy, width: 1.5),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         textStyle: uiStyle.copyWith(fontWeight: FontWeight.w600, fontSize: 14),
@@ -155,15 +170,15 @@ ThemeData buildAppTheme() {
       fillColor: AppColors.surface,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.border),
+        borderSide: BorderSide(color: AppColors.border),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.border),
+        borderSide: BorderSide(color: AppColors.border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.navy, width: 2),
+        borderSide: BorderSide(color: AppColors.navy, width: 2),
       ),
       hintStyle: uiStyle.copyWith(color: AppColors.textLight, fontSize: 14),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -173,12 +188,12 @@ ThemeData buildAppTheme() {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 8,
     ),
-    dividerTheme: const DividerThemeData(
+    dividerTheme: DividerThemeData(
       color: AppColors.divider,
       thickness: 1,
       space: 1,
     ),
-    iconTheme: const IconThemeData(
+    iconTheme: IconThemeData(
       color: AppColors.navy,
       size: 20,
     ),

@@ -189,7 +189,7 @@ class _MultiCaseSetupScreenState extends ConsumerState<MultiCaseSetupScreen> {
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.navy,
-                    side: const BorderSide(color: AppColors.navy),
+                    side: BorderSide(color: AppColors.navy),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     minimumSize: const Size(double.infinity, 0),
                   ),

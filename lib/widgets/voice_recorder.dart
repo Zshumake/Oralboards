@@ -278,7 +278,7 @@ class _VoiceRecorderState extends State<VoiceRecorder>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: AppColors.navy, width: 1.5),
+          borderSide: BorderSide(color: AppColors.navy, width: 1.5),
         ),
       ),
     );

@@ -71,7 +71,7 @@ class _ExportReportButtonState extends ConsumerState<ExportReportButton> {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (_isGenerating)
-                const SizedBox(
+                SizedBox(
                   width: 14,
                   height: 14,
                   child: CircularProgressIndicator(
@@ -80,7 +80,7 @@ class _ExportReportButtonState extends ConsumerState<ExportReportButton> {
                   ),
                 )
               else
-                const Icon(Icons.download, size: 14, color: AppColors.navy),
+                Icon(Icons.download, size: 14, color: AppColors.navy),
               const SizedBox(width: 6),
               Text(
                 _isGenerating ? 'Generating...' : 'Export Report',

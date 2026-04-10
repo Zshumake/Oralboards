@@ -122,7 +122,7 @@ class _StudySessionScreenState extends ConsumerState<StudySessionScreen>
                                   decoration: BoxDecoration(
                                     color: AppColors.surface,
                                     borderRadius: BorderRadius.circular(8),
-                                    border: const Border(
+                                    border: Border(
                                       left: BorderSide(
                                           color: AppColors.burgundy, width: 3),
                                     ),

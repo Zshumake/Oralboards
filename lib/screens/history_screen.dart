@@ -52,7 +52,7 @@ class HistoryScreen extends ConsumerWidget {
                 // Content
                 Expanded(
                   child: historyAsync.when(
-                    loading: () => const Center(
+                    loading: () => Center(
                       child: CircularProgressIndicator(color: AppColors.navy),
                     ),
                     error: (e, _) => Center(
@@ -230,7 +230,7 @@ class _HistoryCardState extends State<_HistoryCard> {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.warning_amber,
+                            Icon(Icons.warning_amber,
                                 size: 12, color: AppColors.danger),
                             const SizedBox(width: 4),
                             Text(
@@ -279,7 +279,7 @@ class _HistoryCardState extends State<_HistoryCard> {
                   AnimatedRotation(
                     turns: _isExpanded ? 0.5 : 0,
                     duration: const Duration(milliseconds: 200),
-                    child: const Icon(
+                    child: Icon(
                       Icons.expand_more,
                       size: 20,
                       color: AppColors.textMuted,

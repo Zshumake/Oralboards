@@ -30,7 +30,7 @@ class TopicCoverageMap extends ConsumerWidget {
           // Header
           Row(
             children: [
-              const Icon(Icons.map_outlined, size: 22, color: AppColors.navy),
+              Icon(Icons.map_outlined, size: 22, color: AppColors.navy),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(

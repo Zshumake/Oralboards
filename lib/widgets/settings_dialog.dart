@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../models/examiner_persona.dart';
 import '../providers/exam_settings_provider.dart';
+import '../providers/persona_provider.dart';
 import '../providers/settings_provider.dart';
+import '../providers/theme_provider.dart';
 import '../providers/tts_provider.dart';
 import '../theme/app_theme.dart';
 
@@ -119,11 +122,19 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
             const SizedBox(height: 16),
             Container(height: 1, color: AppColors.divider),
             const SizedBox(height: 16),
+            const _PersonaSelector(),
+            const SizedBox(height: 16),
+            Container(height: 1, color: AppColors.divider),
+            const SizedBox(height: 16),
             _TimedExamToggle(),
             const SizedBox(height: 16),
             Container(height: 1, color: AppColors.divider),
             const SizedBox(height: 16),
             _HighContrastToggle(),
+            const SizedBox(height: 16),
+            Container(height: 1, color: AppColors.divider),
+            const SizedBox(height: 16),
+            _DarkModeToggle(),
           ],
         ),
       ),
@@ -361,6 +372,210 @@ class _HighContrastToggle extends ConsumerWidget {
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1,
                   color: isHC ? Colors.white : AppColors.textMuted,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PersonaSelector extends ConsumerWidget {
+  const _PersonaSelector();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedPersona = ref.watch(selectedPersonaProvider).valueOrNull ??
+        ExaminerPersona.chen;
+    final randomize = ref.watch(randomizePersonaProvider).valueOrNull ?? false;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.person_outline, size: 18, color: AppColors.navy),
+            const SizedBox(width: 10),
+            Text(
+              'Examiner Persona',
+              style: GoogleFonts.dmSans(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: AppColors.navy,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 80,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: ExaminerPersona.all.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final persona = ExaminerPersona.all[index];
+              final isSelected = persona.id == selectedPersona.id;
+              return GestureDetector(
+                onTap: () =>
+                    ref.read(selectedPersonaProvider.notifier).select(persona),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 110,
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.navy.withValues(alpha: 0.08)
+                        : AppColors.surfaceAlt,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isSelected ? AppColors.navy : Colors.transparent,
+                      width: 2,
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: persona.iconColor,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          persona.initials,
+                          style: GoogleFonts.dmSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        persona.name,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.text,
+                        ),
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        persona.description,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 9,
+                          color: AppColors.textMuted,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.shuffle, size: 16, color: AppColors.textMuted),
+                const SizedBox(width: 8),
+                Text(
+                  'Randomize on exam start',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 13,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+            GestureDetector(
+              onTap: () =>
+                  ref.read(randomizePersonaProvider.notifier).toggle(),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color:
+                      randomize ? AppColors.success : AppColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  randomize ? 'ON' : 'OFF',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1,
+                    color: randomize ? Colors.white : AppColors.textMuted,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _DarkModeToggle extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = ref.watch(isDarkModeProvider).valueOrNull ?? false;
+
+    return Semantics(
+      toggled: isDark,
+      label: 'Dark mode',
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+                size: 18,
+                color: AppColors.navy,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Dark Mode',
+                style: GoogleFonts.dmSans(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: AppColors.navy,
+                ),
+              ),
+            ],
+          ),
+          GestureDetector(
+            onTap: () => ref.read(isDarkModeProvider.notifier).toggle(),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.success : AppColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                isDark ? 'ON' : 'OFF',
+                style: GoogleFonts.dmSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1,
+                  color: isDark ? Colors.white : AppColors.textMuted,
                 ),
               ),
             ),

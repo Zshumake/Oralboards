@@ -22,7 +22,7 @@ class DashboardScreen extends ConsumerWidget {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800),
             child: analyticsAsync.when(
-              loading: () => const Center(
+              loading: () => Center(
                 child: CircularProgressIndicator(color: AppColors.navy),
               ),
               error: (e, _) => Center(child: Text('Error: $e')),

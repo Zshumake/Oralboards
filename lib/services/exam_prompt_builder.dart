@@ -5,6 +5,7 @@ String buildExamSystemPrompt({
   required String casePresentation,
   required ExamSection section,
   required List<String> conceptsHitSoFar,
+  String personaModifier = '',
 }) {
   final domainContext = _buildDomainContext(section.domain);
 
@@ -16,7 +17,7 @@ PERSONA:
 - Do NOT praise, encourage, or editorialize. Do NOT say "good job" or "correct."
 - Present information matter-of-factly and ask brief follow-up probes.
 - Speak in short, clear sentences like a real board examiner.
-
+${personaModifier.isNotEmpty ? '\nPERSONALITY MODIFIER:\n$personaModifier\n' : ''}
 $domainContext
 
 BEHAVIOR RULES:

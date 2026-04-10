@@ -174,7 +174,7 @@ class ExamScoreCard extends StatelessWidget {
                           style: GoogleFonts.dmSans(fontWeight: FontWeight.w600)),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.navy,
-                        side: const BorderSide(color: AppColors.navy),
+                        side: BorderSide(color: AppColors.navy),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 24, vertical: 12),
                       ),
@@ -558,7 +558,7 @@ class _SectionScoreCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.warning_amber,
+                      Icon(Icons.warning_amber,
                           size: 12, color: AppColors.danger),
                       const SizedBox(width: 4),
                       Text(

@@ -115,7 +115,7 @@ class _ExamReviewScreenState extends ConsumerState<ExamReviewScreen> {
                 const SizedBox(height: 24),
 
                 if (_isLoading)
-                  const Center(
+                  Center(
                       child:
                           CircularProgressIndicator(color: AppColors.navy))
                 else
@@ -223,7 +223,7 @@ class _ReviewSectionCard extends StatelessWidget {
                   AnimatedRotation(
                     turns: isExpanded ? 0.5 : 0,
                     duration: const Duration(milliseconds: 200),
-                    child: const Icon(Icons.expand_more,
+                    child: Icon(Icons.expand_more,
                         size: 20, color: AppColors.textMuted),
                   ),
                 ],
@@ -313,7 +313,7 @@ class _ReviewSectionCard extends StatelessWidget {
                           padding: const EdgeInsets.only(bottom: 3),
                           child: Row(
                             children: [
-                              const Icon(Icons.check_circle,
+                              Icon(Icons.check_circle,
                                   size: 14, color: AppColors.success),
                               const SizedBox(width: 8),
                               Expanded(
@@ -346,7 +346,7 @@ class _ReviewSectionCard extends StatelessWidget {
                           padding: const EdgeInsets.only(bottom: 3),
                           child: Row(
                             children: [
-                              const Icon(Icons.cancel,
+                              Icon(Icons.cancel,
                                   size: 14, color: AppColors.danger),
                               const SizedBox(width: 8),
                               Expanded(
@@ -379,7 +379,7 @@ class _ReviewSectionCard extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.warning_amber,
+                              Icon(Icons.warning_amber,
                                   size: 14, color: AppColors.danger),
                               const SizedBox(width: 6),
                               Text(

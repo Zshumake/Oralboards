@@ -368,7 +368,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                       color: AppColors.text,
                                     ),
                                     decoration: InputDecoration(
-                                      prefixIcon: const Icon(
+                                      prefixIcon: Icon(
                                         Icons.search,
                                         color: AppColors.textMuted,
                                         size: 20,
@@ -404,7 +404,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                 ),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: AppColors.navy,
-                                  side: const BorderSide(color: AppColors.navy),
+                                  side: BorderSide(color: AppColors.navy),
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 16,
                                     vertical: 14,
@@ -471,7 +471,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                 ),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: AppColors.navy,
-                                  side: const BorderSide(color: AppColors.navy),
+                                  side: BorderSide(color: AppColors.navy),
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 14,
                                   ),

@@ -343,7 +343,7 @@ class _CaseResultCardState extends State<_CaseResultCard> {
                     ),
                   ),
                   if (widget.redFlags > 0) ...[
-                    const Icon(Icons.warning_amber,
+                    Icon(Icons.warning_amber,
                         size: 14, color: AppColors.danger),
                     const SizedBox(width: 4),
                     Text(
@@ -360,7 +360,7 @@ class _CaseResultCardState extends State<_CaseResultCard> {
                     AnimatedRotation(
                       turns: _isExpanded ? 0.5 : 0,
                       duration: const Duration(milliseconds: 200),
-                      child: const Icon(Icons.expand_more,
+                      child: Icon(Icons.expand_more,
                           size: 20, color: AppColors.textMuted),
                     ),
                 ],

@@ -60,7 +60,7 @@ class _CaseCardState extends ConsumerState<CaseCard> {
                       color: AppColors.navy.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.medical_services_outlined,
                       size: 18,
                       color: AppColors.navy,

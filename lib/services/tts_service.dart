@@ -1,4 +1,5 @@
 import 'package:flutter_tts/flutter_tts.dart';
+import '../models/examiner_persona.dart';
 
 class TtsService {
   final FlutterTts _tts = FlutterTts();
@@ -29,6 +30,13 @@ class TtsService {
     });
 
     _isInitialized = true;
+  }
+
+  /// Apply pitch and rate from an examiner persona.
+  Future<void> applyPersona(ExaminerPersona persona) async {
+    if (!_isInitialized) await init();
+    await _tts.setPitch(persona.pitch);
+    await _tts.setSpeechRate(persona.rate);
   }
 
   Future<void> speak(String text) async {

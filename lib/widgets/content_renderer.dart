@@ -44,7 +44,7 @@ class ContentRenderer extends StatelessWidget {
         ),
         listIndent: 20,
         blockSpacing: 14,
-        horizontalRuleDecoration: const BoxDecoration(
+        horizontalRuleDecoration: BoxDecoration(
           border: Border(
             top: BorderSide(color: AppColors.divider),
           ),

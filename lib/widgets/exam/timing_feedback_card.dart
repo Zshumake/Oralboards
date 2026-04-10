@@ -62,7 +62,7 @@ class TimingFeedbackCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.timer_outlined,
+              Icon(Icons.timer_outlined,
                   size: 16, color: AppColors.warning),
               const SizedBox(width: 8),
               Text(
@@ -152,7 +152,7 @@ class TimingFeedbackCard extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.arrow_upward,
+                      Icon(Icons.arrow_upward,
                           size: 12, color: AppColors.burgundy),
                       const SizedBox(width: 6),
                       Expanded(
@@ -173,7 +173,7 @@ class TimingFeedbackCard extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.arrow_downward,
+                      Icon(Icons.arrow_downward,
                           size: 12, color: AppColors.warning),
                       const SizedBox(width: 6),
                       Expanded(
