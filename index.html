@@ -52,6 +52,15 @@
     #loading .bar { width: 120px; height: 3px; background: #E8E2D9; border-radius: 2px; margin-top: 20px; overflow: hidden; }
     #loading .bar::after { content: ''; display: block; width: 40%; height: 100%; background: #1B3A5C; border-radius: 2px; animation: slide 1.2s ease-in-out infinite; }
     @keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+
+    /* Dark mode support for loading screen */
+    @media (prefers-color-scheme: dark) {
+      body { background: #1A1A2E; }
+      #loading { background: #1A1A2E; color: #E8E2D9; }
+      #loading h1, #loading p { color: #E8E2D9; }
+      #loading .bar { background: #3A3A50; }
+      #loading .bar::after { background: #7EB5E0; }
+    }
   </style>
 </head>
 <body>
