@@ -28,7 +28,14 @@ class ExamSettingsNotifier extends AsyncNotifier<ExamSettings> {
   Future<ExamSettings> build() async {
     final prefs = ref.read(sharedPrefsProvider);
     final isTimed = await prefs.getBool('exam_timed_mode') ?? false;
-    final duration = await prefs.getInt('exam_duration_minutes') ?? 20;
+
+    // Use the onboarding session length as default duration if available,
+    // but prefer any explicitly saved exam duration.
+    final onboardingMinutes =
+        await prefs.getInt('onboarding_session_minutes') ?? 20;
+    final duration =
+        await prefs.getInt('exam_duration_minutes') ?? onboardingMinutes;
+
     return ExamSettings(isTimedMode: isTimed, examDurationMinutes: duration);
   }
 
@@ -46,3 +53,17 @@ class ExamSettingsNotifier extends AsyncNotifier<ExamSettings> {
     state = AsyncData(current.copyWith(examDurationMinutes: minutes));
   }
 }
+
+/// The user's exam date from onboarding, or null if not set.
+final examDateProvider = FutureProvider<DateTime?>((ref) async {
+  final prefs = ref.read(sharedPrefsProvider);
+  final ms = await prefs.getInt('onboarding_exam_date');
+  if (ms == null) return null;
+  return DateTime.fromMillisecondsSinceEpoch(ms);
+});
+
+/// Weekly case goal from onboarding preferences.
+final casesPerWeekGoalProvider = FutureProvider<int>((ref) async {
+  final prefs = ref.read(sharedPrefsProvider);
+  return await prefs.getInt('onboarding_cases_per_week') ?? 5;
+});

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/goals.dart';
 import '../services/database_service.dart';
+import 'streak_freeze_provider.dart';
 
 class GoalsState {
   final List<PracticeGoal> goals;
@@ -47,8 +48,12 @@ class GoalsNotifier extends AsyncNotifier<GoalsState> {
     if (dates.isEmpty) return const StreakData();
 
     final today = DateTime.now();
-    final todayStr =
-        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+    // Read freeze state
+    final freezeState =
+        await ref.read(streakFreezeProvider.future);
+    var freezesAvailable = freezeState.freezesAvailable;
+    var freezeUsedToday = freezeState.freezeUsedToday;
 
     int currentStreak = 0;
     int longestStreak = 0;
@@ -63,8 +68,22 @@ class GoalsNotifier extends AsyncNotifier<GoalsState> {
       if (i == 0) {
         // Check if last practice was today or yesterday
         final diff = today.difference(date).inDays;
-        if (diff > 1) break; // Streak broken
-        runningStreak = 1;
+        if (diff <= 1) {
+          runningStreak = 1;
+        } else if (diff == 2 && freezesAvailable > 0) {
+          // Missed exactly 1 day — consume a freeze to preserve streak
+          final consumed =
+              await ref.read(streakFreezeProvider.notifier).consumeFreeze();
+          if (consumed) {
+            freezesAvailable--;
+            freezeUsedToday = true;
+            runningStreak = 1;
+          } else {
+            break; // Freeze failed, streak broken
+          }
+        } else {
+          break; // Streak broken — gap too large
+        }
       } else {
         final prev = DateTime.tryParse(dates[i - 1]);
         if (prev == null) continue;
@@ -79,7 +98,7 @@ class GoalsNotifier extends AsyncNotifier<GoalsState> {
 
     currentStreak = runningStreak;
 
-    // Compute longest streak
+    // Compute longest streak (historical — no freeze logic needed)
     int tempStreak = 0;
     for (var i = 0; i < dates.length; i++) {
       if (i == 0) {
@@ -96,6 +115,7 @@ class GoalsNotifier extends AsyncNotifier<GoalsState> {
       }
     }
     if (tempStreak > longestStreak) longestStreak = tempStreak;
+    if (currentStreak > longestStreak) longestStreak = currentStreak;
 
     final lastDate =
         dates.isNotEmpty ? DateTime.tryParse(dates.first) : null;
@@ -104,6 +124,9 @@ class GoalsNotifier extends AsyncNotifier<GoalsState> {
       currentStreak: currentStreak,
       longestStreak: longestStreak,
       lastPracticeDate: lastDate,
+      freezesAvailable: freezesAvailable,
+      freezeUsedToday: freezeUsedToday,
+      lastFreezeRefillDate: freezeState.lastFreezeRefillDate,
     );
   }
 

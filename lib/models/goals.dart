@@ -55,10 +55,16 @@ class StreakData {
   final int currentStreak;
   final int longestStreak;
   final DateTime? lastPracticeDate;
+  final int freezesAvailable;
+  final bool freezeUsedToday;
+  final DateTime? lastFreezeRefillDate;
 
   const StreakData({
     this.currentStreak = 0,
     this.longestStreak = 0,
     this.lastPracticeDate,
+    this.freezesAvailable = 1,
+    this.freezeUsedToday = false,
+    this.lastFreezeRefillDate,
   });
 }

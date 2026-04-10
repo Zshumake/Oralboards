@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../providers/goals_provider.dart';
 import '../theme/app_theme.dart';
 import 'goal_dialog.dart';
+import 'streak_freeze_indicator.dart';
 
 class StreakCard extends ConsumerWidget {
   const StreakCard({super.key});
@@ -60,6 +61,11 @@ class StreakCard extends ConsumerWidget {
                       fontSize: 12,
                       color: AppColors.textMuted,
                     ),
+                  ),
+                  const SizedBox(width: 8),
+                  StreakFreezeIndicator(
+                    freezesAvailable: goalsState.streak.freezesAvailable,
+                    freezeUsedToday: goalsState.streak.freezeUsedToday,
                   ),
                 ],
               ),
