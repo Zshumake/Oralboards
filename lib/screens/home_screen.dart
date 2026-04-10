@@ -9,6 +9,7 @@ import '../theme/app_theme.dart';
 import '../widgets/due_reviews_card.dart';
 import '../widgets/recommendation_card.dart';
 import '../widgets/streak_card.dart';
+import '../widgets/study_plan_card.dart';
 import '../widgets/case_card.dart';
 import 'case_author_screen.dart';
 import 'dashboard_screen.dart';
@@ -289,7 +290,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           const SizedBox(height: 16),
                           // API key banner when not set
                           _ApiKeyBanner(),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 16),
+                          // Study plan countdown + today's focus
+                          StudyPlanCard(onOpenCase: _openCase),
+                          const SizedBox(height: 16),
                           // Due reviews
                           const DueReviewsCard(),
                           // Streak & Goals
