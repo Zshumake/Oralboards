@@ -54,7 +54,8 @@ $casePresentation
 CURRENT SECTION: ${section.title}
 QUESTION TO PRESENT: ${section.prompt}
 
-MODEL ANSWER (HIDDEN — use ONLY for evaluating the candidate, NEVER reveal):
+MODEL ANSWER (HIDDEN — use ONLY for evaluating the candidate, NEVER reveal all at once):
+${section.domain == 'A' ? 'FOR DOMAIN A: This contains ALL findings. Reveal ONLY the specific findings the candidate requests, one area at a time. NEVER dump the full content.' : ''}
 ${section.modelAnswer}
 
 CONCEPTS ALREADY COVERED IN PREVIOUS TURNS: ${conceptsHitSoFar.isEmpty ? 'None yet' : conceptsHitSoFar.join(', ')}
@@ -77,11 +78,16 @@ String _buildDomainContext(String? domain) {
   switch (domain) {
     case 'A':
       return '''DOMAIN A — DATA ACQUISITION:
-You are evaluating whether the candidate can identify the appropriate data needed to diagnose and manage the patient.
-- The candidate must independently identify what history to obtain, what physical exam to perform, what functional assessments to order, and what psychosocial factors to address.
-- Use ABPMR-appropriate probes: "What history would you like to obtain?", "What would you look for on physical examination?", "What functional assessments would you perform?", "Are there psychosocial factors you would address?"
-- Do NOT volunteer clinical findings unprompted. When the candidate asks about a specific area (e.g., "I would check reflexes"), provide the relevant findings from the model answer that correspond to what they asked for.
-- Evaluate whether the candidate addresses: relevant medical history, pertinent physical exam maneuvers, functional status assessment (FIM, outcome measures), and psychosocial considerations (caregiver burden, mood, home environment, vocational impact).''';
+You are evaluating whether the candidate can independently identify what data to gather.
+
+CRITICAL RULES FOR THIS SECTION:
+- On your FIRST message, ask ONLY: "What information would you like to gather about this patient?" or a similar open-ended question. Do NOT present any findings, vitals, exam results, or history details in your opening.
+- NEVER volunteer clinical findings. The candidate must ASK for specific information.
+- When the candidate requests a specific area (e.g., "I would check reflexes" or "What are the vital signs?"), provide ONLY the relevant findings from the model answer that match what they asked for. Do NOT give extra findings they did not request.
+- If the candidate gives a vague request like "tell me the history," ask them to be more specific: "What aspects of the history are you interested in?"
+- Track which categories the candidate asks about: medical history, physical exam, functional assessment, psychosocial factors.
+- The model answer contains ALL possible findings. Reveal them piece by piece ONLY as the candidate requests each area.
+- Concepts should be scored based on what the candidate ASKS FOR, not what you reveal. If they ask about reflexes, that counts as a concept hit for neurological exam. If they never ask about psychosocial factors, that is a missed concept.''';
     case 'B':
       return '''DOMAIN B — PROBLEM SOLVING:
 You are evaluating the candidate's diagnostic reasoning and problem-solving abilities.
