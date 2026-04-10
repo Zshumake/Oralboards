@@ -8,9 +8,12 @@ import '../providers/recommendations_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/due_reviews_card.dart';
 import '../widgets/recommendation_card.dart';
+import '../widgets/achievements_sheet.dart';
 import '../widgets/streak_card.dart';
 import '../widgets/study_plan_card.dart';
 import '../widgets/case_card.dart';
+import '../widgets/xp_bar.dart';
+import '../providers/achievement_provider.dart';
 import 'case_author_screen.dart';
 import 'dashboard_screen.dart';
 import 'exam_screen.dart';
@@ -40,6 +43,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       duration: const Duration(milliseconds: 600),
     );
     _fadeController.forward();
+
+    // Check achievements on app load
+    Future.microtask(() {
+      ref.read(achievementProvider.notifier).checkAchievements();
+    });
   }
 
   @override
@@ -260,6 +268,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                               ),
                               const SizedBox(width: 16),
                               GestureDetector(
+                                onTap: () =>
+                                    AchievementsSheet.show(context),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.emoji_events_outlined,
+                                      size: 14,
+                                      color: const Color(0xFFD4A843),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'BADGES',
+                                      style: GoogleFonts.dmSans(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFFD4A843),
+                                        letterSpacing: 1.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              GestureDetector(
                                 onTap: () => showSettingsDialog(context),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -298,6 +331,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           const DueReviewsCard(),
                           // Streak & Goals
                           const StreakCard(),
+                          const SizedBox(height: 12),
+                          // XP progress bar
+                          const XpBar(),
                           const SizedBox(height: 24),
                           // Thin bottom rule
                           Container(

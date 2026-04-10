@@ -5,11 +5,13 @@ import '../models/exam_result.dart';
 import '../services/database_service.dart';
 import '../services/exam_prompt_builder.dart';
 import '../services/gemini_service.dart' as gemini;
+import 'achievement_provider.dart';
 import 'history_provider.dart';
 import 'review_provider.dart';
 import 'settings_provider.dart';
 import 'timer_provider.dart';
 import 'tts_provider.dart';
+import 'xp_provider.dart';
 
 class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
   final Ref ref;
@@ -362,6 +364,14 @@ class ExamSessionNotifier extends StateNotifier<ExamSessionState> {
           .toList();
     }
     await DatabaseService.insertTranscripts(resultId, transcripts);
+
+    // Award XP for exam completion
+    await ref.read(xpProvider.notifier).awardForExam(result);
+
+    // Check for newly unlocked achievements
+    await ref
+        .read(achievementProvider.notifier)
+        .checkAchievements(latestResult: result);
   }
 
   static String? _inferDomain(String sectionTitle) {
